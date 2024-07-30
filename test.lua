@@ -1,6 +1,6 @@
 --
 
-function func(a)
+local function func(a)
     return 1,2,3
 end
 

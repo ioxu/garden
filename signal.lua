@@ -41,7 +41,7 @@ if arg and arg[0] == "signal.lua" then
     print("signal.lua tests:")
 
     print("initialise Signal")
-    s = Signal:new()
+    local s = Signal:new()
     
     local function onPlantDie( thing )
         for k,v in pairs(thing) do

@@ -1,14 +1,14 @@
 --
 
-local function func(a)
-    return 1,2,3
-end
+-- local function func(a)
+--     return 1,2,3
+-- end
 
-print( {func(1)} )
+-- print( {func(1)} )
 
-for i,v in ipairs({func(1)}) do
-    print(i, v)
-end
+-- for i,v in ipairs({func(1)}) do
+--     print(i, v)
+-- end
 
 -- local t = {1,2,3,4,5,6}
 

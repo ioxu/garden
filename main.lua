@@ -42,6 +42,8 @@ state.plants = {}
 
 local dead_dots = {}
 
+local selected_point_indices_to_remove = {}
+
 local function onPlantDie( plant )
     for k,v in pairs(plant) do
         -- print("[onPlantDie] "..v.name .." has died.")
@@ -56,18 +58,9 @@ local function onPlantDie( plant )
             end
         end
         
-        
-        --tree:remove( rem_value )
-        
-        
+        local t = {x=rem_pos[1], y= rem_pos[2], metadata=rem_value}
+        local removed_from_quadtree = tree:remove( t )
         local removed = table.remove( state.plants, rem_index )
-        -- print("removed: ".. table.concat(removed) )
-        -- for k,v in pairs(removed)do
-        --     print("  ", k, v)
-        -- end
-
-        -- table.insert( dead_dots, rem_pos[1])
-        -- table.insert( dead_dots, rem_pos[2])
     end
 end
 
@@ -89,17 +82,17 @@ local function onPlantSpawned( plant )
             local query_box = {x = new_plant.position.x-h_query_size, y=new_plant.position.y-h_query_size, width=query_size, height=query_size}
             table.insert(query_boxes, query_box )
             local in_rect = tree:queryRange( query_box , {} )
-            print("query:", #in_rect)
+            -- print("query:", #in_rect)
 
             local do_add = true
             for k,other in ipairs(in_rect) do
                 local rr = (other.userdata.max_size + new_plant.max_size)
                 local dist = vector.distance( new_plant.position.x, new_plant.position.y, other.userdata.position.x, other.userdata.position.y )
-                print("rr", rr, "dist", dist, do_add)
+                -- print("rr", rr, "dist", dist, do_add)
 
 
                 if dist < rr then
-                    print("    - REJECT")
+                    -- print("    - REJECT")
                     do_add = false
                     break
                 end
@@ -107,11 +100,12 @@ local function onPlantSpawned( plant )
 
 
             if do_add then
+                tree:insert( {x = new_plant.position.x, y = new_plant.position.y, userdata=new_plant}  )
                 table.insert(state.plants, new_plant)
             end
 
         else
-            print("number of state.plants maximum reached")
+            -- print("number of state.plants maximum reached")
         end
     end
 end
@@ -142,7 +136,7 @@ function love.load()
     print("making plants ..")
     for i = 1,8,1 do
         -- local new_plant = plants.plant:new( "qbit"..i, {x=rng:random() * window_width, y=rng:random() * window_height}, 0.0 )
-        local spread = window_width * 0.8
+        local spread = window_height * 0.8
         local new_plant = plants.plant:new( "qbit"..i, {x=(rng:random() -0.5) * spread + window_width/2, y=(rng:random() -0.5) * spread + window_height/2}, 0.0 )
         new_plant.max_size = rng:random() * 10.0 + 5.0
         new_plant.max_age = rng:random() * 10.0 + 5.0
@@ -164,8 +158,6 @@ local global_frame = 0
 local global_time = 0.0
 
 function love.update(dt)
-    --[ love update callback
-    --]
 
     mem_usage_update_timer = mem_usage_update_timer + dt
     if mem_usage_update_timer > 2.5 then
@@ -173,68 +165,30 @@ function love.update(dt)
         mem_usage_update_timer = 0
     end
 
-
-    tree = Quadtree:new( 0, 0, window_width, window_height )
-
     global_time = global_time + dt
     global_frame = global_frame + 1
-    
-    -- diagnostics
-    if global_frame % 120 == 0 then
-        do_update_timer = true
-        start_update_timer = love.timer.getTime()
+
+    -- remove selected points
+    for i,v in pairs( selected_point_indices_to_remove ) do
+        onPlantDie( {v} )
+    end
+    if #selected_point_indices_to_remove > 0 then
+        selected_point_indices_to_remove = {}
     end
 
-
- 
-    --
-    for k,v in pairs( state.plants ) do
-        -- print("update", k, v)
-        
-        --
-        --
-        --
-        --
-        --
-        --tree:remove( v )
-        --
-        --
-        --
-        --
-        --
-
-        -- v:update( dt )
-        -- v.position.x, v.position.y = rotatePoint( v.position.x, v.position.y, 0.025 * dt )
-        -- tree:insert( v, v.position.x, v.position.y )
-        tree:insert( {x = v.position.x, y = v.position.y, userdata=v}  )
-    end
-
-    -- if #state.plants == 200 then
-    --     print("halt")
-    -- end
-
+    -- update points
     for k,v in pairs( state.plants ) do
         v:update( dt )
     end
-
-    -- if #state.plants > 1000 then
-    --     print("halt")
-    -- end
-
-    -- diagnostics
-    -- if do_update_timer then
-    --     end_update_timer = love.timer.getTime() - start_update_timer
-    --     print("[diag] love.update " .. string.format("%.5f", end_update_timer))
-    --     do_update_timer = false
-    -- end
 end
 
 -- ---------------------------------------------------------------------------------------
 local start_draw_timer, end_draw_timer
 local do_draw_timer = false
+local draw_timer_string = ""
+
 function love.draw()
-    --[ love update callback
-    --]
+    love.graphics.clear( 0.025,0.025,0.025 )
     -- diagnostics
     if global_frame % 120 == 0 then
         do_draw_timer = true
@@ -245,21 +199,12 @@ function love.draw()
     --local tree_depth, tree_quadcount = drawquad ( tree, 1, 1 )
     tree:draw()
 
-    -- love.graphics.setPointSize( 2 )
-    -- love.graphics.setColor( 0.9,0.7,0.2,0.75 )
-    -- love.graphics.points(dead_dots)
-
-
-
     --
     love.graphics.setLineWidth(2)
 
     for i,v in ipairs(state.plants) do
         love.graphics.setColor( v.color )
-        love.graphics.circle("line", v.position.x, v.position.y, v.size, 16 )--v.size)--, 8)
-        -- love.graphics.setColor( v.color[1], v.color[2], v.color[3], 0.25  )
-        -- love.graphics.circle("line", v.position.x, v.position.y, 3)--v.size)--, 8)
-    
+        love.graphics.circle("fill", v.position.x, v.position.y, v.size, 16 )
     end
 
     --------------------------------------------------------------------------------------
@@ -279,15 +224,16 @@ function love.draw()
     --------------------------------------------------------------------------------------
 
     -- diagnostics
-    -- if do_draw_timer then
-    --     end_draw_timer = love.timer.getTime() - start_draw_timer
-    --     print("[diag] love.draw " .. string.format("%.5f", end_draw_timer) .. string.format(" (%0.2f%% of 60fps)", (end_draw_timer/(1.0/60))*100.0 ) )
-    --     do_draw_timer = false
-    -- end
+    if do_draw_timer then
+        end_draw_timer = love.timer.getTime() - start_draw_timer
+        -- print("[diag] love.draw " .. string.format("%.5f", end_draw_timer) .. string.format(" (%0.2f%% of 60fps)", (end_draw_timer/(1.0/60))*100.0 ) )
+        draw_timer_string = string.format("%.5fms", end_draw_timer) .. string.format(" (%0.2f%% of 60fps)", (end_draw_timer/(1.0/60))*100.0 )
+        do_draw_timer = false
+    end
 
     --
-    love.graphics.setColor( {0.0,0.0,0.0,0.5} )
-    love.graphics.rectangle("fill", 8,8,30,55)
+    love.graphics.setColor( {0.0,0.0,0.0,0.85} )
+    love.graphics.rectangle("fill", 8,8,255,85)
     love.graphics.setColor( {1.0,1.0,1.0,0.5} )
     local fps = love.timer.getFPS()
     love.graphics.setFont(font_medium)
@@ -296,7 +242,7 @@ function love.draw()
     
     love.graphics.setFont(font_small)
     --love.graphics.print( string.format("depth: %i\nquads: %i", tree_depth, tree_quadcount), 10, 55 )
-    love.graphics.print( string.format("mem: %0.1f MB\n", mem_usage / 102.4), 10, 55 )
+    love.graphics.print( string.format("mem: %0.1f MB\ndraw time: %s", mem_usage / 102.4, draw_timer_string), 10, 55 )
 
 
     -- debug
@@ -311,6 +257,17 @@ function love.draw()
 end
 
 -- ---------------------------------------------------------------------------------------
+function love.mousepressed(x,y,button,istouch,presses)
+    
+    -- select points for deletion with mouse right-click
+    if button == 2 then
+        local in_rect = tree:queryRange( {x = x-50, y=y-50, width=100, height=100} , {} )
+        for k,v in pairs( in_rect ) do
+            table.insert(selected_point_indices_to_remove, v.userdata)
+        end
+    end
+end
+
 
 function love.keypressed(key, code, isrepeat)
     if key == "escape" then

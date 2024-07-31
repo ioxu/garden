@@ -21,6 +21,7 @@ Plants.plant.__index = Plants.plant
 local rng = love.math.newRandomGenerator()
 rng:setSeed(os.time())
 
+
 function Plants.plant:new( name, position, age )
     local instance = setmetatable( {}, Plants.plant )
     -- base
@@ -41,6 +42,7 @@ function Plants.plant:new( name, position, age )
     return instance
 end
 
+
 function Plants.plant:update( dt )
     if self.age < self.max_age then
         self.age = self.age + dt
@@ -55,42 +57,29 @@ function Plants.plant:update( dt )
     if (self.age/self.max_age) > self.sexual_maturity_age_ratio then
         if (rng:random() < self.child_spawn_chance and self.children_spawned < self.child_spawn_max_amount) then
             self.children_spawned = self.children_spawned + 1
-            
-            -- local new_position = {x = self.position.x + ((rng:random()-0.5) * 80.0),
-            --                     y = self.position.y + ((rng:random()-0.5) * 80.0)}
-            
-            local new_child = Plants.plant:new( self.name .. self.children_spawned ) -- new_position)
-            
-            --rng:setSeed(self.age)
+            local new_child = Plants.plant:new( self.name .. self.children_spawned ) -- new_position)            
             new_child.max_age = math.max(0.5, self.max_age + ((rng:random() - 0.5)*5.0))
-            --print("new_child.max_age "..new_child.max_age..string.format("(parent: %f)", self.max_age))
-            --rng:setSeed(self.age)
             new_child.max_size = math.max(5.0, self.max_size + ((rng:random() - 0.5)*5.0))
-            --print("new_child.max_size "..new_child.max_size..string.format("(parent: %f)", self.max_size))
-            -- duplicate parent's signals
 
-            local x,y = vector.rotatePoint( self.max_size + new_child.max_size + 0.5, 0.0, 0.0, 0.0, rng:random()*2*math.pi )
+            local x,y = vector.rotatePoint( self.max_size + new_child.max_size + 0.25, 0.0, 0.0, 0.0, rng:random()*2*math.pi )
             new_child.position = {x=x+self.position.x, y=y+self.position.y}
 
             local col = {color.rgbToHsl( unpack( self.color ))}
-            print(col)
             col[1] = col[1] + (rng:random()-0.5) * 0.03
             col[2] = col[2] + (rng:random()-0.5) * 0.03
             col[2] = col[2] + (rng:random()-0.5) * 0.03
             new_child.color = {color.hslToRgb( unpack( col ) )}
 
-
+            -- duplicate parent's signals
             new_child.signals.listeners = self.signals.listeners --tables.shallow_copy(self.signals)
 
-            --print("[spawn]  "..self.name.." has spawned "..new_child.name.."!")
             self.signals:emit("plant_spawned", {new_child})
         end
     end
 
 end
 
-
---
+------------------------------------------------------------------------------------------
 if arg and arg[0] == "plants.lua" then
     print("plants.lua tests:")
     local p = Plants.plant:new("plant_one", {1.0, 2.0}, 0.0)

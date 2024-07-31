@@ -3,24 +3,27 @@ local Quadtree = {}
 Quadtree.__index = Quadtree
 
 
-function Quadtree:new(x, y, width, height, capacity)
+function Quadtree:new(x, y, width, height, capacity, name)
     local self = setmetatable({}, Quadtree)
     self.boundary = {x = x, y = y, width = width, height = height}
     self.capacity = capacity or 4
     self.points = {}
     self.divided = false
+    self.name = name or ""
     return self
 end
+
 
 function Quadtree:subdivide()
     local x, y, w, h = self.boundary.x, self.boundary.y, self.boundary.width, self.boundary.height
     local hw, hh = w / 2, h / 2
-    self.northeast = Quadtree:new(x + hw, y, hw, hh, self.capacity)
-    self.northwest = Quadtree:new(x, y, hw, hh, self.capacity)
-    self.southeast = Quadtree:new(x + hw, y + hh, hw, hh, self.capacity)
-    self.southwest = Quadtree:new(x, y + hh, hw, hh, self.capacity)
+    self.northeast = Quadtree:new(x + hw, y, hw, hh, self.capacity, self.name.."-NE")
+    self.northwest = Quadtree:new(x, y, hw, hh, self.capacity, self.name.."-NW")
+    self.southeast = Quadtree:new(x + hw, y + hh, hw, hh, self.capacity, self.name.."-SE")
+    self.southwest = Quadtree:new(x, y + hh, hw, hh, self.capacity, self.name.."-SW")
     self.divided = true
 end
+
 
 function Quadtree:insert(point)
     if not self:contains(self.boundary, point) then
@@ -42,6 +45,7 @@ function Quadtree:insert(point)
     end
 end
 
+
 function Quadtree:contains(boundary, point)
     return point.x >= boundary.x and
            point.x < boundary.x + boundary.width and
@@ -49,12 +53,14 @@ function Quadtree:contains(boundary, point)
            point.y < boundary.y + boundary.height
 end
 
+
 function Quadtree:intersects(range, boundary)
     return not (range.x > boundary.x + boundary.width or
                 range.x + range.width < boundary.x or
                 range.y > boundary.y + boundary.height or
                 range.y + range.height < boundary.y)
 end
+
 
 function Quadtree:queryRange(range, found)
     if not self:intersects(range, self.boundary) then
@@ -78,6 +84,7 @@ function Quadtree:queryRange(range, found)
     return found
 end
 
+
 function Quadtree:remove(point)
     if not self:contains(self.boundary, point) then
         return false
@@ -90,15 +97,52 @@ function Quadtree:remove(point)
         end
     end
 
+    -- if self.divided then
+    --     if self.northeast:remove(point) then return true end
+    --     if self.northwest:remove(point) then return true end
+    --     if self.southeast:remove(point) then return true end
+    --     if self.southwest:remove(point) then return true end
+    -- end
+
     if self.divided then
-        if self.northeast:remove(point) then return true end
-        if self.northwest:remove(point) then return true end
-        if self.southeast:remove(point) then return true end
-        if self.southwest:remove(point) then return true end
+        local removed = self.northeast:remove(point) or
+                        self.northwest:remove(point) or
+                        self.southeast:remove(point) or
+                        self.southwest:remove(point)
+        if removed then
+            self:unsubdivide_if_empty()
+        end
+        return removed
     end
 
     return false
 end
+
+
+function Quadtree:unsubdivide_if_empty()
+    if self.divided and
+        #self.points == 0 and
+        #self.northeast.points == 0 and
+        #self.northwest.points == 0 and
+        #self.southeast.points == 0 and
+        #self.southwest.points == 0 and
+        not self.northeast.divided and
+        not self.northwest.divided and
+        not self.southeast.divided and
+        not self.southwest.divided then
+            print(string.format("unsubdivide %s", self.name))
+            print(string.format("unsubdivide %s", self.northeast.name))
+            self.northeast = nil
+            print(string.format("unsubdivide %s", self.northwest.name))
+            self.northwest = nil
+            print(string.format("unsubdivide %s", self.southeast.name))
+            self.southeast = nil
+            print(string.format("unsubdivide %s", self.southwest.name))
+            self.southwest = nil
+            self.divided = false
+        end
+end
+
 
 
 function Quadtree:draw()

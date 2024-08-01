@@ -7,6 +7,7 @@ end
 local plants = require "plants"
 local Quadtree = require "quadtree"
 local vector = require "vector"
+local shaping = require "shaping"
 
 math.randomseed( os.time() )
 io.stdout:setvbuf("no")
@@ -139,7 +140,7 @@ function love.load()
         -- local new_plant = plants.plant:new( "qbit"..i, {x=rng:random() * window_width, y=rng:random() * window_height}, 0.0 )
         local spread = window_height * 0.8
         local new_plant = plants.plant:new( "qbit"..i, {x=(rng:random() -0.5) * spread + window_width/2, y=(rng:random() -0.5) * spread + window_height/2}, 0.0 )
-        new_plant.max_size = rng:random() * 10.0 + 5.0
+        new_plant.max_size = shaping.remap(rng:random() , 0, 1, 5, 20) --rng:random() * 5.0 + 2.5
         new_plant.max_age = rng:random() * 10.0 + 5.0
         
         new_plant.signals:register("plant_died", onPlantDie)
@@ -209,7 +210,7 @@ function love.draw()
 
     for i,v in ipairs(state.plants) do
         love.graphics.setColor( v.color )
-        love.graphics.circle("fill", v.position.x, v.position.y, v.size, 16 )
+        love.graphics.circle("line", v.position.x, v.position.y, v.size, 16 )
     end
 
     --------------------------------------------------------------------------------------
@@ -268,9 +269,18 @@ function love.draw()
 
 end
 
+
 -- ---------------------------------------------------------------------------------------
 function love.mousepressed(x,y,button,istouch,presses)
-    
+    -- inspect quadtree on mouse left-click
+    if button ==1 then
+        local ret = tree:inspect( {x = x, y =y} )
+        -- for i,v in pairs(ret) do
+        --     print("INSPECT: ", i, v)
+        -- end
+        print("INSPECT: ", ret)
+    end
+
     -- select points for deletion with mouse right-click
     if button == 2 then
         local in_rect = tree:queryRange( {x = x-50, y=y-50, width=100, height=100} , {} )
@@ -292,6 +302,7 @@ function love.keypressed(key, code, isrepeat)
         is_plants_paused = not is_plants_paused
     end
 end
+
 
 -- debug ---------------------------------------------------------------------------------
 local love_errorhandler = love.errorhandler

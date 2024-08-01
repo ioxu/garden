@@ -59,9 +59,9 @@ function Plants.plant:update( dt )
             self.children_spawned = self.children_spawned + 1
             local new_child = Plants.plant:new( self.name .. self.children_spawned ) -- new_position)            
             new_child.max_age = math.max(0.5, self.max_age + ((rng:random() - 0.5)*5.0))
-            new_child.max_size = math.max(5.0, self.max_size + ((rng:random() - 0.5)*5.0))
+            new_child.max_size = math.min( 22, math.max(2, self.max_size + ((rng:random() - 0.5)*3)))
 
-            local x,y = vector.rotatePoint( self.max_size + new_child.max_size + 0.25, 0.0, 0.0, 0.0, rng:random()*2*math.pi )
+            local x,y = vector.rotatePoint( self.max_size + new_child.max_size + 0.15, 0.0, 0.0, 0.0, rng:random()*2*math.pi )
             new_child.position = {x=x+self.position.x, y=y+self.position.y}
 
             local col = {color.rgbToHsl( unpack( self.color ))}

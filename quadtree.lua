@@ -45,6 +45,35 @@ function Quadtree:insert(point)
     end
 end
 
+function Quadtree:inspect( point )
+    --[[return the structure of the quadtree at the position of point
+    ]]--
+    local n_points = 0
+
+    return self:_inspect( point, n_points )
+end
+
+
+function Quadtree:_inspect(point, n_points)
+    
+    if not self:contains(self.boundary, point) then
+        return 0
+    end
+
+    -- n_points = n_points + #self.points
+    n_points = #self.points
+    
+    print(string.format("[inspect] %s %i (%i)", self.name, #self.points, n_points))
+    if self.divided then
+        n_points = n_points + self.northeast:_inspect( point, n_points )
+        n_points = n_points + self.northwest:_inspect( point, n_points )
+        n_points = n_points + self.southeast:_inspect( point, n_points )
+        n_points = n_points + self.southwest:_inspect( point, n_points )
+    end
+
+    return n_points
+end
+
 
 function Quadtree:contains(boundary, point)
     return point.x >= boundary.x and
@@ -97,24 +126,18 @@ function Quadtree:remove(point)
         end
     end
 
-    -- if self.divided then
-    --     if self.northeast:remove(point) then return true end
-    --     if self.northwest:remove(point) then return true end
-    --     if self.southeast:remove(point) then return true end
-    --     if self.southwest:remove(point) then return true end
-    -- end
 
     if self.divided then
         local removed = self.northeast:remove(point) or
                         self.northwest:remove(point) or
                         self.southeast:remove(point) or
                         self.southwest:remove(point)
-        if removed then
-            self:unsubdivide_if_empty()
-        end
+        -- if removed then
+        --     self:unsubdivide_if_empty()
+        -- end
+        self:unsubdivide_if_empty()
         return removed
     end
-
     return false
 end
 

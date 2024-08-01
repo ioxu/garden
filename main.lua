@@ -122,6 +122,7 @@ local mem_usage_update_timer = 0.0
 -- ---------------------------------------------------------------------------------------
 
 
+local font_huge = love.graphics.newFont(100)
 local font_medium = love.graphics.newFont(20)
 local font_small = love.graphics.newFont(12.5)
 
@@ -156,6 +157,8 @@ local start_update_timer, end_update_timer
 local do_update_timer = false
 local global_frame = 0
 local global_time = 0.0
+local is_plants_paused = false
+
 
 function love.update(dt)
 
@@ -168,17 +171,19 @@ function love.update(dt)
     global_time = global_time + dt
     global_frame = global_frame + 1
 
-    -- remove selected points
-    for i,v in pairs( selected_point_indices_to_remove ) do
-        onPlantDie( {v} )
-    end
-    if #selected_point_indices_to_remove > 0 then
-        selected_point_indices_to_remove = {}
-    end
+    if not is_plants_paused then
+        -- remove selected points
+        for i,v in pairs( selected_point_indices_to_remove ) do
+            onPlantDie( {v} )
+        end
+        if #selected_point_indices_to_remove > 0 then
+            selected_point_indices_to_remove = {}
+        end
 
-    -- update points
-    for k,v in pairs( state.plants ) do
-        v:update( dt )
+        -- update points
+        for k,v in pairs( state.plants ) do
+            v:update( dt )
+        end
     end
 end
 
@@ -245,6 +250,13 @@ function love.draw()
     love.graphics.print( string.format("mem: %0.1f MB\ndraw time: %s", mem_usage / 102.4, draw_timer_string), 10, 55 )
 
 
+    
+    if is_plants_paused then
+        love.graphics.setFont(font_huge)
+        local fw = font_huge:getWidth("PAUSED")
+        love.graphics.print("PAUSED", window_width/2.0 - fw/2.0 ,20)
+    end
+
     -- debug
     love.graphics.setColor(0.9,0.8,0.1,0.5)
     for _,v in ipairs(query_boxes) do
@@ -275,6 +287,9 @@ function love.keypressed(key, code, isrepeat)
     end
     if code == "f5" then
         collectgarbage()
+    end
+    if code == "space" then
+        is_plants_paused = not is_plants_paused
     end
 end
 

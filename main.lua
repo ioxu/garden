@@ -9,7 +9,6 @@ local Quadtree = require "quadtree"
 local vector = require "vector"
 local shaping = require "shaping"
 
-math.randomseed( os.time() )
 io.stdout:setvbuf("no")
 
 -- print("module:", plants)
@@ -28,24 +27,30 @@ local window_width, window_height = love.graphics.getDimensions()
 -- quadtree stuff, https://love2d.org/forums/viewtopic.php?t=83296
 local qt_size = 600
 local x1, x2, y1, y2 = window_width/2 - qt_size,
-                    window_width/2 + qt_size,
-                    window_height/2 - qt_size,
-                    window_height/2 + qt_size
+window_width/2 + qt_size,
+window_height/2 - qt_size,
+window_height/2 + qt_size
 -- local tree = Quadtree( 0, 0, window_width, window_height ) 
 local tree = Quadtree:new( 0, 0, window_width, window_height ) -- Quadtree:new( x1, y1, x2, y2 )
 local drawquads = true
 
+-- ---------------------------------------------------------------------------------------
+math.randomseed( os.time() )
+local rng = love.math.newRandomGenerator()
+rng:setSeed( os.time() )
 -- ---------------------------------------------------------------------------------------
 
 -- state methods
 local state = {}
 state.plants = {}
 
-local dead_dots = {}
-
 local selected_point_indices_to_remove = {}
+local query_boxes = {}
 
+
+-- ---------------------------------------------------------------------------------------
 local function onPlantDie( plant )
+    -- signal listener for when a plant emits a die signal
     for k,v in pairs(plant) do
         -- print("[onPlantDie] "..v.name .." has died.")
         local rem_index = nil
@@ -66,10 +71,10 @@ local function onPlantDie( plant )
 end
 
 
-local query_boxes = {}
-
-
 local function onPlantSpawned( plant )
+    --[[ signal listener for when a plant spawns a new child-plant
+    new_plant.signals:register("plant_spawned", onPlantSpawned)
+    ]]--
     for k,new_plant in pairs(plant) do
         --print("[OnPlantSpawned] "..new_plant.name.." has been spawned.")
         
@@ -130,25 +135,24 @@ local font_small = love.graphics.newFont(12.5)
 -- ---------------------------------------------------------------------------------------
 
 function love.load()
-
-    local rng = love.math.newRandomGenerator()
-    rng:setSeed( os.time() )
     print("dimensions:", window_width, window_height)
 
-    print("making plants ..")
-    for i = 1,8,1 do
-        -- local new_plant = plants.plant:new( "qbit"..i, {x=rng:random() * window_width, y=rng:random() * window_height}, 0.0 )
-        local spread = window_height * 0.8
-        local new_plant = plants.plant:new( "qbit"..i, {x=(rng:random() -0.5) * spread + window_width/2, y=(rng:random() -0.5) * spread + window_height/2}, 0.0 )
-        new_plant.max_size = shaping.remap(rng:random() , 0, 1, 5, 20) --rng:random() * 5.0 + 2.5
-        new_plant.max_age = rng:random() * 10.0 + 5.0
+    love.mouse.setVisible( false )
+
+    -- print("making plants ..")
+    -- for i = 1,8,1 do
+    --     -- local new_plant = plants.plant:new( "qbit"..i, {x=rng:random() * window_width, y=rng:random() * window_height}, 0.0 )
+    --     local spread = window_height * 0.8
+    --     local new_plant = plants.plant:new( "qbit"..i, {x=(rng:random() -0.5) * spread + window_width/2, y=(rng:random() -0.5) * spread + window_height/2}, 0.0 )
+    --     new_plant.max_size = shaping.remap(rng:random() , 0, 1, 5, 20) --rng:random() * 5.0 + 2.5
+    --     new_plant.max_age = rng:random() * 10.0 + 5.0
         
-        new_plant.signals:register("plant_died", onPlantDie)
-        new_plant.signals:register("plant_spawned", onPlantSpawned)
-        table.insert(state.plants, new_plant )
-        tree:insert( { x= new_plant.position.x, y = new_plant.position.y, userdata = new_plant} )
-    end
-    print(" .. done (made " .. #state.plants .. " plants)")
+    --     new_plant.signals:register("plant_died", onPlantDie)
+    --     new_plant.signals:register("plant_spawned", onPlantSpawned)
+    --     table.insert(state.plants, new_plant )
+    --     tree:insert( { x= new_plant.position.x, y = new_plant.position.y, userdata = new_plant} )
+    -- end
+    -- print(" .. done (made " .. #state.plants .. " plants)")
 
     
 end
@@ -216,8 +220,10 @@ function love.draw()
     --------------------------------------------------------------------------------------
     -- mouse inspect square
     local mx, my = love.mouse.getPosition()
-    love.graphics.setColor( {0.0,1.0,0.0,0.5} )
+    love.graphics.setColor( {0.9,0.8,0.2,0.15} )
     love.graphics.rectangle("line", mx - 50, my -50, 100, 100)
+    love.graphics.setColor( {0.9,0.8,0.2,0.25} )
+    love.graphics.line( mx, my, mx + 15, my +15 )
 
     local in_rect = tree:queryRange( {x = mx-50, y=my-50, width=100, height=100} , {} )
 
@@ -227,6 +233,10 @@ function love.draw()
         --love.graphics.points( v.x, v.y )
         love.graphics.circle("fill", v.x, v.y, 2.5, 11)
     end
+
+    tree:draw_tree( mx, my )
+
+
     --------------------------------------------------------------------------------------
 
     -- diagnostics
@@ -272,17 +282,27 @@ end
 
 -- ---------------------------------------------------------------------------------------
 function love.mousepressed(x,y,button,istouch,presses)
-    -- inspect quadtree on mouse left-click
+    --
     if button ==1 then
-        local ret = tree:inspect( {x = x, y =y} )
-        -- for i,v in pairs(ret) do
-        --     print("INSPECT: ", i, v)
-        -- end
-        print("INSPECT: ", ret)
+        -- local ret = tree:inspect( {x = x, y =y} )
+        -- print("INSPECT: ", ret)
+        
+        -- make a new plant at click
+        local new_plant = plants.plant:new( "handplaced", {x=x, y=y}, 0.0 )
+        new_plant.max_size = shaping.remap(rng:random() , 0, 1, 5, 20) --rng:random() * 5.0 + 2.5
+        new_plant.max_age = rng:random() * 10.0 + 5.0
+        new_plant.child_spawn_max_amount = 0
+        new_plant.immortal = true
+        
+        new_plant.signals:register("plant_died", onPlantDie)
+        new_plant.signals:register("plant_spawned", onPlantSpawned)
+        table.insert(state.plants, new_plant )
+        tree:insert( { x= new_plant.position.x, y = new_plant.position.y, userdata = new_plant} )
     end
 
     -- select points for deletion with mouse right-click
     if button == 2 then
+        print("[delete] ----------------")
         local in_rect = tree:queryRange( {x = x-50, y=y-50, width=100, height=100} , {} )
         for k,v in pairs( in_rect ) do
             table.insert(selected_point_indices_to_remove, v.userdata)

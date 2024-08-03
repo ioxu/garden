@@ -28,6 +28,7 @@ function Plants.plant:new( name, position, age )
     instance.name = name or Plants.plant.name
     instance.position = position or {x = 0.0, y = 0.0}--Plants.plant.position
     instance.age = age or 0.0
+    instance.immortal = false
     instance.size = 0.0
     instance.max_size = 50.0
     instance.max_age = 10.0
@@ -48,7 +49,7 @@ function Plants.plant:update( dt )
         self.age = self.age + dt
         -- self.size = (self.age/self.max_age) * self.max_size
         self.size = shaping.bias( (self.age/self.max_age), 0.95 ) * self.max_size
-    elseif self.age >= self.max_age then
+    elseif self.age >= self.max_age and self.immortal ~= true then
         -- die
         self.signals:emit("plant_died", {self})
     end

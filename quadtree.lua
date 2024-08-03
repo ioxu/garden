@@ -45,35 +45,6 @@ function Quadtree:insert(point)
     end
 end
 
-function Quadtree:inspect( point )
-    --[[return the structure of the quadtree at the position of point
-    ]]--
-    local n_points = 0
-
-    return self:_inspect( point, n_points )
-end
-
-
-function Quadtree:_inspect(point, n_points)
-    
-    if not self:contains(self.boundary, point) then
-        return 0
-    end
-
-    -- n_points = n_points + #self.points
-    n_points = #self.points
-    
-    print(string.format("[inspect] %s %i (%i)", self.name, #self.points, n_points))
-    if self.divided then
-        n_points = n_points + self.northeast:_inspect( point, n_points )
-        n_points = n_points + self.northwest:_inspect( point, n_points )
-        n_points = n_points + self.southeast:_inspect( point, n_points )
-        n_points = n_points + self.southwest:_inspect( point, n_points )
-    end
-
-    return n_points
-end
-
 
 function Quadtree:contains(boundary, point)
     return point.x >= boundary.x and
@@ -135,7 +106,8 @@ function Quadtree:remove(point)
         -- if removed then
         --     self:unsubdivide_if_empty()
         -- end
-        self:unsubdivide_if_empty()
+        local ret_unsub = self:unsubdivide_if_empty()
+        print(string.format("remove  (uns) %s: %s", self.name, ret_unsub))
         return removed
     end
     return false
@@ -163,13 +135,16 @@ function Quadtree:unsubdivide_if_empty()
             print(string.format("unsubdivide %s", self.southwest.name))
             self.southwest = nil
             self.divided = false
-        end
+            return true
+    else
+        return false
+    end
 end
 
 
-
 function Quadtree:draw()
-    love.graphics.setColor ( 0.0, 0.0, 1.0, 0.25 )
+    love.graphics.setLineWidth(1)
+    love.graphics.setColor(0.243, 0.443, 0.671, 0.25)
     love.graphics.rectangle("line", self.boundary.x, self.boundary.y, self.boundary.width, self.boundary.height)
     if self.divided then
         self.northeast:draw()
@@ -178,6 +153,69 @@ function Quadtree:draw()
         self.southwest:draw()
     end
 end
+
+function Quadtree:draw_tree( x, y )
+    love.graphics.setLineWidth(1)
+    local depth = 0
+    local width = 0
+    local quadrant = 0
+    self:_draw_tree( x, y, depth, width, quadrant )
+end
+
+function Quadtree:_draw_tree( x, y, depth, width, quadrant )
+    local p = {x=x, y=y}
+    local depth_m = 30
+
+    local x_1 = 50 + depth *depth_m
+    local y_1 = 150 + quadrant * 35 + width * 5 -- 150 + (prev_width) * 75 + width * 5
+    local x_2 = 75 + depth *depth_m
+    local y_2 = y_1
+
+    if not self:contains( self.boundary, p ) then
+        love.graphics.setColor(0.3, 0.3, 0.3, 0.4)
+    else
+        love.graphics.setColor(0.9, 0.8, 0.2, 0.4)
+    end
+    love.graphics.line( x_1, y_1, x_2, y_2)
+
+    if self.divided then
+        self.northeast:_draw_tree( x, y, depth +1, width + 0, 0 )
+        self.northwest:_draw_tree( x, y, depth +1, width + 1, 1 * depth )
+        self.southeast:_draw_tree( x, y, depth +1, width + 2, 2 * depth )
+        self.southwest:_draw_tree( x, y, depth +1, width + 3, 3 * depth )
+    end
+end
+
+
+function Quadtree:inspect( point )
+    --[[return the structure of the quadtree at the position of point
+    ]]--
+    local n_points = 0
+
+    return self:_inspect( point, n_points )
+end
+
+
+function Quadtree:_inspect(point, n_points)
+    
+    if not self:contains(self.boundary, point) then
+        return 0
+    end
+
+    -- n_points = n_points + #self.points
+    n_points = #self.points
+    
+    print(string.format("[inspect] %s %i (%i)", self.name, #self.points, n_points))
+    if self.divided then
+        n_points = n_points + self.northeast:_inspect( point, n_points )
+        n_points = n_points + self.northwest:_inspect( point, n_points )
+        n_points = n_points + self.southeast:_inspect( point, n_points )
+        n_points = n_points + self.southwest:_inspect( point, n_points )
+    end
+
+    return n_points
+end
+
 
 ------------------------------------------------------------------------------------------
 

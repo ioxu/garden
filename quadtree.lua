@@ -2,6 +2,8 @@
 local Quadtree = {}
 Quadtree.__index = Quadtree
 
+local font_medium = love.graphics.newFont(20)
+local font_small = love.graphics.newFont(8.5)
 
 function Quadtree:new(x, y, width, height, capacity, name)
     local self = setmetatable({}, Quadtree)
@@ -156,35 +158,75 @@ end
 
 function Quadtree:draw_tree( x, y )
     love.graphics.setLineWidth(1)
-    local depth = 0
+    local depth = 1
     local width = 0
-    local quadrant = 0
-    self:_draw_tree( x, y, depth, width, quadrant )
+    local quadrant_offset = 0
+
+    -- self:_draw_tree( x, y, depth, width, quadrant_offset)
+    self:_draw_tree( 400, 100, 200, 25, depth)
 end
 
-function Quadtree:_draw_tree( x, y, depth, width, quadrant )
-    local p = {x=x, y=y}
-    local depth_m = 30
-
-    local x_1 = 50 + depth *depth_m
-    local y_1 = 150 + quadrant * 35 + width * 5 -- 150 + (prev_width) * 75 + width * 5
-    local x_2 = 75 + depth *depth_m
-    local y_2 = y_1
-
-    if not self:contains( self.boundary, p ) then
-        love.graphics.setColor(0.3, 0.3, 0.3, 0.4)
-    else
-        love.graphics.setColor(0.9, 0.8, 0.2, 0.4)
+function Quadtree:_draw_tree(x,y, spacing_x, spacing_y, depth )
+    -- love.graphics.circle("line",x,y, 5)
+    love.graphics.line( x,y, x, y+10 )
+    for i, point in ipairs(self.points) do
+        love.graphics.points( x + i *7.5, y )
     end
-    love.graphics.line( x_1, y_1, x_2, y_2)
 
     if self.divided then
-        self.northeast:_draw_tree( x, y, depth +1, width + 0, 0 )
-        self.northwest:_draw_tree( x, y, depth +1, width + 1, 1 * depth )
-        self.southeast:_draw_tree( x, y, depth +1, width + 2, 2 * depth )
-        self.southwest:_draw_tree( x, y, depth +1, width + 3, 3 * depth )
+        local offset_x = spacing_x 
+        local offset_y = spacing_y 
+        local children_positions = {
+            {x - offset_x/depth, y + spacing_y},
+            {x - offset_x/depth/3, y + spacing_y},
+            {x + offset_x/depth/3, y + spacing_y},
+            {x + offset_x/depth, y + spacing_y}
+        }
+        
+        for i, child in ipairs(children_positions) do
+            local child_x, child_y = children_positions[i][1], children_positions[i][2]
+            love.graphics.line( x,y +10 , child_x, child_y )
+        end
+        -- for i = 1,4 do
+        --     local child_x, child_y = children_positions[i][1], children_positions[i][2]
+        -- end
+        depth = depth +1
+        self.northeast:_draw_tree( children_positions[1][1],children_positions[1][2], spacing_x/2, spacing_y, depth )
+        self.northwest:_draw_tree( children_positions[2][1],children_positions[2][2], spacing_x/2, spacing_y, depth )
+        self.southeast:_draw_tree( children_positions[3][1],children_positions[3][2], spacing_x/2, spacing_y, depth )
+        self.southwest:_draw_tree( children_positions[4][1],children_positions[4][2], spacing_x/2, spacing_y, depth )
+
     end
 end
+-- function Quadtree:_draw_tree( x, y, depth, width, quadrant_offset)
+--     local p = {x=x, y=y}
+--     local depth_m = 50
+
+--     local x_1 = 50 + depth *depth_m
+--     local y_1 = 150 + quadrant_offset + (width * 5)  -- 150 + (prev_width) * 75 + width * 5
+--     local x_2 = 75 + depth *depth_m
+--     local y_2 = y_1
+
+--     if not self:contains( self.boundary, p ) then
+--         love.graphics.setColor(0.3, 0.3, 0.3, 0.2)
+--     else
+--         love.graphics.setColor(0.9, 0.8, 0.2, 0.4)
+--     end
+    
+--     quadrant_offset = quadrant_offset + (depth * width ) *50
+--     love.graphics.line( x_1, y_1, x_2, y_2)
+--     love.graphics.setFont(font_small)
+--     love.graphics.print(string.format("d%d w%d q%d", depth, width, quadrant_offset), x_1, y_1-15)
+
+
+--     if self.divided then
+--         self.northeast:_draw_tree( x, y, depth +1, 0, quadrant_offset )
+--         self.northwest:_draw_tree( x, y, depth +1, 1, quadrant_offset )
+--         self.southeast:_draw_tree( x, y, depth +1, 2, quadrant_offset )
+--         self.southwest:_draw_tree( x, y, depth +1, 3, quadrant_offset )
+--     end
+-- end
+
 
 
 function Quadtree:inspect( point )

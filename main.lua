@@ -22,6 +22,9 @@ io.stdout:setvbuf("no")
 -- ---------------------------------------------------------------------------------------
 -- window
 local window_width, window_height = love.graphics.getDimensions()
+local font_huge = love.graphics.newFont(100)
+local font_medium = love.graphics.newFont(20)
+local font_small = love.graphics.newFont(12.5)
 
 -- ---------------------------------------------------------------------------------------
 -- quadtree stuff, https://love2d.org/forums/viewtopic.php?t=83296
@@ -123,14 +126,6 @@ local mem_usage = 0
 local mem_usage_update_timer = 0.0
 
 -- collectgarbage("collect")
-
-
--- ---------------------------------------------------------------------------------------
-
-
-local font_huge = love.graphics.newFont(100)
-local font_medium = love.graphics.newFont(20)
-local font_small = love.graphics.newFont(12.5)
 
 -- ---------------------------------------------------------------------------------------
 

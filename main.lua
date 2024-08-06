@@ -134,20 +134,20 @@ function love.load()
 
     love.mouse.setVisible( false )
 
-    -- print("making plants ..")
-    -- for i = 1,8,1 do
-    --     -- local new_plant = plants.plant:new( "qbit"..i, {x=rng:random() * window_width, y=rng:random() * window_height}, 0.0 )
-    --     local spread = window_height * 0.8
-    --     local new_plant = plants.plant:new( "qbit"..i, {x=(rng:random() -0.5) * spread + window_width/2, y=(rng:random() -0.5) * spread + window_height/2}, 0.0 )
-    --     new_plant.max_size = shaping.remap(rng:random() , 0, 1, 5, 20) --rng:random() * 5.0 + 2.5
-    --     new_plant.max_age = rng:random() * 10.0 + 5.0
+    print("making plants ..")
+    for i = 1,8,1 do
+        -- local new_plant = plants.plant:new( "qbit"..i, {x=rng:random() * window_width, y=rng:random() * window_height}, 0.0 )
+        local spread = window_height * 0.8
+        local new_plant = plants.plant:new( "qbit"..i, {x=(rng:random() -0.5) * spread + window_width/2, y=(rng:random() -0.5) * spread + window_height/2}, 0.0 )
+        new_plant.max_size = shaping.remap(rng:random() , 0, 1, 5, 20) --rng:random() * 5.0 + 2.5
+        new_plant.max_age = rng:random() * 10.0 + 5.0
         
-    --     new_plant.signals:register("plant_died", onPlantDie)
-    --     new_plant.signals:register("plant_spawned", onPlantSpawned)
-    --     table.insert(state.plants, new_plant )
-    --     tree:insert( { x= new_plant.position.x, y = new_plant.position.y, userdata = new_plant} )
-    -- end
-    -- print(" .. done (made " .. #state.plants .. " plants)")
+        new_plant.signals:register("plant_died", onPlantDie)
+        new_plant.signals:register("plant_spawned", onPlantSpawned)
+        table.insert(state.plants, new_plant )
+        tree:insert( { x= new_plant.position.x, y = new_plant.position.y, userdata = new_plant} )
+    end
+    print(" .. done (made " .. #state.plants .. " plants)")
 
     
 end

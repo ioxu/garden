@@ -156,26 +156,34 @@ function Quadtree:draw()
     end
 end
 
-function Quadtree:draw_tree( x, y )
+function Quadtree:draw_tree( inspect_x, inspect_y )
     love.graphics.setLineWidth(1)
     local depth = 1
     local width = 0
     local quadrant_offset = 0
 
+    ----
+    local window_width, window_height = love.graphics.getDimensions()
+    ----
+
     -- self:_draw_tree( x, y, depth, width, quadrant_offset)
-    self:_draw_tree( 400, 100, 200, 25, depth)
+    self:_draw_tree( window_width/2, 100, window_width/2.55, 60, depth)
 end
 
 function Quadtree:_draw_tree(x,y, spacing_x, spacing_y, depth )
     -- love.graphics.circle("line",x,y, 5)
-    love.graphics.line( x,y, x, y+10 )
+    
+    love.graphics.setColor( 0.35, 1.0, 0.1, .3 )
+    love.graphics.line( x,y+1, x, y+10 )
     for i, point in ipairs(self.points) do
         love.graphics.points( x + i *7.5, y )
     end
 
+    -- depth = math.max(0, depth)
+
     if self.divided then
-        local offset_x = spacing_x 
-        local offset_y = spacing_y 
+        local offset_x = spacing_x
+        local offset_y = spacing_y
         local children_positions = {
             {x - offset_x/depth, y + spacing_y},
             {x - offset_x/depth/3, y + spacing_y},
@@ -191,10 +199,10 @@ function Quadtree:_draw_tree(x,y, spacing_x, spacing_y, depth )
         --     local child_x, child_y = children_positions[i][1], children_positions[i][2]
         -- end
         depth = depth +1
-        self.northeast:_draw_tree( children_positions[1][1],children_positions[1][2], spacing_x/2, spacing_y, depth )
-        self.northwest:_draw_tree( children_positions[2][1],children_positions[2][2], spacing_x/2, spacing_y, depth )
-        self.southeast:_draw_tree( children_positions[3][1],children_positions[3][2], spacing_x/2, spacing_y, depth )
-        self.southwest:_draw_tree( children_positions[4][1],children_positions[4][2], spacing_x/2, spacing_y, depth )
+        self.northeast:_draw_tree( children_positions[1][1],children_positions[1][2], spacing_x/2.75, spacing_y, depth )
+        self.northwest:_draw_tree( children_positions[2][1],children_positions[2][2], spacing_x/2.75, spacing_y, depth )
+        self.southeast:_draw_tree( children_positions[3][1],children_positions[3][2], spacing_x/2.75, spacing_y, depth )
+        self.southwest:_draw_tree( children_positions[4][1],children_positions[4][2], spacing_x/2.75, spacing_y, depth )
 
     end
 end

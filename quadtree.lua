@@ -1,3 +1,4 @@
+local tables = require("tables")
 -- Quadtree node class
 local Quadtree = {}
 Quadtree.__index = Quadtree
@@ -32,18 +33,26 @@ function Quadtree:insert(point)
         return false
     end
 
-    if #self.points < self.capacity then
-        table.insert(self.points, point)
+    
+    if self.divided then
+        if self.northeast:insert(point) then return true end
+        if self.northwest:insert(point) then return true end
+        if self.southeast:insert(point) then return true end
+        if self.southwest:insert(point) then return true end
+    elseif #self.points < self.capacity then
+        table.insert( self.points, point )
         return true
     else
         if not self.divided then
             self:subdivide()
         end
-
-        if self.northeast:insert(point) then return true end
-        if self.northwest:insert(point) then return true end
-        if self.southeast:insert(point) then return true end
-        if self.southwest:insert(point) then return true end
+        local redist_points = {}
+        redist_points = tables.shallow_copy( self.points )
+        table.insert(redist_points, point)
+        self.points = {}
+        for _, current_point in ipairs(redist_points) do
+            self:insert(current_point)
+        end
     end
 end
 
@@ -112,6 +121,7 @@ function Quadtree:remove(point)
         print(string.format("remove  (uns) %s: %s", self.name, ret_unsub))
         return removed
     end
+
     return false
 end
 

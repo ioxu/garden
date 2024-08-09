@@ -1,4 +1,5 @@
 local tables = require("tables")
+local signal = require "signal"
 -- Quadtree node class
 local Quadtree = {}
 Quadtree.__index = Quadtree
@@ -18,6 +19,7 @@ function Quadtree:new(x, y, width, height, capacity, name)
     self.points = {}
     self.divided = false
     self.name = name or ""
+    self.signals = signal:new()
     return self
 end
 
@@ -30,6 +32,12 @@ function Quadtree:subdivide()
     self.southeast = Quadtree:new(x + hw, y + hh, hw, hh, self.capacity, self.name.."-SE")
     self.southwest = Quadtree:new(x, y + hh, hw, hh, self.capacity, self.name.."-SW")
     self.divided = true
+    -- signals
+    self.northeast.signals.listeners = self.signals.listeners
+    self.northwest.signals.listeners = self.signals.listeners
+    self.southeast.signals.listeners = self.signals.listeners
+    self.southwest.signals.listeners = self.signals.listeners
+    self.signals:emit("subdivided", self)
 end
 
 
@@ -125,7 +133,7 @@ function Quadtree:remove(point)
         --     self:unsubdivide_if_empty()
         -- end
         local ret_unsub = self:unsubdivide_if_empty()
-        print(string.format("remove  (uns) %s: %s", self.name, ret_unsub))
+        -- print(string.format("remove  (uns) %s: %s", self.name, ret_unsub))
         return removed
     end
 
@@ -144,14 +152,18 @@ function Quadtree:unsubdivide_if_empty()
         not self.northwest.divided and
         not self.southeast.divided and
         not self.southwest.divided then
-            print(string.format("unsubdivide %s", self.name))
-            print(string.format("unsubdivide %s", self.northeast.name))
+            -- print(string.format("unsubdivide %s", self.name))
+            -- print(string.format("unsubdivide %s", self.northeast.name))
+            self.signals:emit("unsubdivided", self.northeast)
             self.northeast = nil
-            print(string.format("unsubdivide %s", self.northwest.name))
+            -- print(string.format("unsubdivide %s", self.northwest.name))
+            self.signals:emit("unsubdivided", self.northwest)
             self.northwest = nil
-            print(string.format("unsubdivide %s", self.southeast.name))
+            -- print(string.format("unsubdivide %s", self.southeast.name))
+            self.signals:emit("unsubdivided", self.southeast)
             self.southeast = nil
-            print(string.format("unsubdivide %s", self.southwest.name))
+            -- print(string.format("unsubdivide %s", self.southwest.name))
+            self.signals:emit("unsubdivided", self.southwest)
             self.southwest = nil
             self.divided = false
             return true
@@ -201,7 +213,7 @@ function Quadtree:_draw_tree(x,y, spacing_x, spacing_y, depth, inspect_x, inspec
     end
     love.graphics.line( x,y+1, x, y+10 )
     for i, point in ipairs(self.points) do
-        love.graphics.points( x + i *7.5, y )
+        love.graphics.points( x + i *5, y + i *2.5 )
     end
     
     if self.divided then

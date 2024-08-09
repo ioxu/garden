@@ -119,7 +119,24 @@ local function onPlantSpawned( plant )
     end
 end
 
+-- ---------------------------------------------------------------------------------------
+-- quadtree events
+local subdivided_quads_vis = {}
+local unsubdivided_qauds_vis = {}
 
+local function onQuadtreeSubdivided( quadtree )
+    print( string.format("[quadtree] subdivided: %s", quadtree.name) )
+    table.insert(subdivided_quads_vis, {quad=quadtree, age=1.0})
+end
+
+local function onQuadtreeUnsubdivided( quadtree )
+    print( string.format("[quadtree] UNsubdivided: %s", quadtree.name) )
+    table.insert( unsubdivided_qauds_vis, {quad=quadtree, age=1.0} )
+end
+
+
+tree.signals:register( "subdivided", onQuadtreeSubdivided )
+tree.signals:register( "unsubdivided", onQuadtreeUnsubdivided )
 -- ---------------------------------------------------------------------------------------
 
 local mem_usage = 0
@@ -155,18 +172,25 @@ end
 -- ---------------------------------------------------------------------------------------
 local start_update_timer, end_update_timer
 local do_update_timer = false
+local update_timer_string = ""
 local global_frame = 0
 local global_time = 0.0
 local is_plants_paused = false
 
 
 function love.update(dt)
+    
+    if global_frame % 120 == 0 then
+        do_update_timer = true
+        start_update_timer = love.timer.getTime()
+    end
 
     mem_usage_update_timer = mem_usage_update_timer + dt
     if mem_usage_update_timer > 2.5 then
         mem_usage = collectgarbage("count")
         mem_usage_update_timer = 0
     end
+
 
     global_time = global_time + dt
     global_frame = global_frame + 1
@@ -184,6 +208,31 @@ function love.update(dt)
         for k,v in pairs( state.plants ) do
             v:update( dt )
         end
+    end
+
+    if love.keyboard.isDown('lctrl') and love.keyboard.isDown('f5') then
+        print("BREAK!")
+    end
+
+    -- quadtree subdivision visualisation
+    for i,v in pairs(subdivided_quads_vis) do
+        v.age = v.age - dt
+        if v.age < 0 then
+            subdivided_quads_vis[i] = nil
+        end
+    end
+
+    for i,v in pairs(unsubdivided_qauds_vis) do
+        v.age = v.age - dt
+        if v.age < 0 then
+            unsubdivided_qauds_vis[i] = nil
+        end
+    end
+
+    if do_update_timer then
+        end_update_timer = love.timer.getTime() - start_update_timer
+        update_timer_string = string.format("%.5fms", end_update_timer) .. string.format(" (%0.2f%% of 60fps)", (end_update_timer/(1.0/60))*100.0 )
+        do_update_timer = false
     end
 end
 
@@ -229,10 +278,39 @@ function love.draw()
         love.graphics.circle("fill", v.x, v.y, 2.5, 11)
     end
 
+    love.graphics.setPointSize(3)
     tree:draw_tree( mx, my )
 
 
     --------------------------------------------------------------------------------------
+    
+    -- debug
+    love.graphics.setColor(0.9,0.8,0.1,0.5)
+    for _,v in ipairs(query_boxes) do
+        love.graphics.rectangle("line", v.x, v.y, v.width, v.height)
+    end
+
+    -- quadtree subdivision visualisation
+    love.graphics.setLineWidth(4)
+    for k,v in pairs(subdivided_quads_vis) do
+        love.graphics.setColor( 0.0, 1.0, 0.0, v.age )
+        love.graphics.rectangle("line",
+                                v.quad.boundary.x,
+                                v.quad.boundary.y,
+                                v.quad.boundary.width,
+                                v.quad.boundary.height
+                            )
+    end
+
+    for k,v in pairs(unsubdivided_qauds_vis) do
+        love.graphics.setColor( 1.0, 0.0, 0.0, v.age )
+        love.graphics.rectangle("fill",
+                                v.quad.boundary.x,
+                                v.quad.boundary.y,
+                                v.quad.boundary.width,
+                                v.quad.boundary.height
+                            )
+    end
 
     -- diagnostics
     if do_draw_timer then
@@ -253,8 +331,11 @@ function love.draw()
     
     love.graphics.setFont(font_small)
     --love.graphics.print( string.format("depth: %i\nquads: %i", tree_depth, tree_quadcount), 10, 55 )
-    love.graphics.print( string.format("mem: %0.1f MB\ndraw time: %s", mem_usage / 102.4, draw_timer_string), 10, 55 )
-
+    love.graphics.print( string.format("mem: %0.1f MB\ndraw time: %s\nupdate time: %s",
+                                        mem_usage / 102.4,
+                                        draw_timer_string,
+                                        update_timer_string),
+                                        10, 55 )
 
     
     if is_plants_paused then
@@ -263,11 +344,6 @@ function love.draw()
         love.graphics.print("PAUSED", window_width/2.0 - fw/2.0 ,20)
     end
 
-    -- debug
-    love.graphics.setColor(0.9,0.8,0.1,0.5)
-    for _,v in ipairs(query_boxes) do
-        love.graphics.rectangle("line", v.x, v.y, v.width, v.height)
-    end
 
     -- cleanup
     query_boxes = {}
@@ -312,7 +388,7 @@ function love.keypressed(key, code, isrepeat)
     if key == "escape" then
         love.event.quit()
     end
-    if code == "f5" then
+    if code == "f6" then
         collectgarbage()
     end
     if code == "space" then

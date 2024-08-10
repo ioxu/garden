@@ -174,14 +174,37 @@ end
 
 
 function Quadtree:draw()
+    -- love.graphics.setLineWidth(1)
+    -- love.graphics.setColor(0.243, 0.443, 0.671, 0.05)
+    -- love.graphics.rectangle("line", self.boundary.x, self.boundary.y, self.boundary.width, self.boundary.height)
+    -- if self.divided then
+    --     self.northeast:draw()
+    --     self.northwest:draw()
+    --     self.southeast:draw()
+    --     self.southwest:draw()
+    -- end
     love.graphics.setLineWidth(1)
-    love.graphics.setColor(0.243, 0.443, 0.671, 0.05)
-    love.graphics.rectangle("line", self.boundary.x, self.boundary.y, self.boundary.width, self.boundary.height)
+    love.graphics.setColor(0.243, 0.443, 0.671, 0.25)
+    self:_draw()
+end
+
+
+function Quadtree:_draw()
     if self.divided then
-        self.northeast:draw()
-        self.northwest:draw()
-        self.southeast:draw()
-        self.southwest:draw()
+        local x1 = self.boundary.x + self.boundary.width/2
+        local y1 = self.boundary.y
+        local x2 = x1
+        local y2 = self.boundary.y + self.boundary.height
+        love.graphics.line(x1, y1, x2, y2 )
+        x1 = self.boundary.x
+        y1 = self.boundary.y + self.boundary.height / 2
+        x2 = self.boundary.x + self.boundary.width
+        y2 = y1 
+        love.graphics.line(x1, y1, x2, y2 )
+        self.northeast:_draw()
+        self.northwest:_draw()
+        self.southeast:_draw()
+        self.southwest:_draw()
     end
 end
 

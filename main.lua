@@ -166,7 +166,7 @@ function love.load()
     end
     print(" .. done (made " .. #state.plants .. " plants)")
 
-    
+    love.graphics.setLineStyle("rough")
 end
 
 -- ---------------------------------------------------------------------------------------
@@ -237,6 +237,12 @@ function love.update(dt)
 end
 
 -- ---------------------------------------------------------------------------------------
+local do_draw_quadtree_graph = true
+local do_draw_quadtree_quads = true
+local do_draw_subdivision_changes = true
+local do_draw_new_plant_query_areas = true
+local do_draw_plants = true
+
 local start_draw_timer, end_draw_timer
 local do_draw_timer = false
 local draw_timer_string = ""
@@ -250,15 +256,18 @@ function love.draw()
     end
     
     -- quadtree
-    --local tree_depth, tree_quadcount = drawquad ( tree, 1, 1 )
-    tree:draw()
+    if do_draw_quadtree_quads then
+        tree:draw()
+    end
 
     --
     love.graphics.setLineWidth(2)
 
-    for i,v in ipairs(state.plants) do
-        love.graphics.setColor( v.color )
-        love.graphics.circle("line", v.position.x, v.position.y, v.size, 16 )
+    if do_draw_plants then
+        for i,v in ipairs(state.plants) do
+            love.graphics.setColor( v.color )
+            love.graphics.circle("line", v.position.x, v.position.y, v.size, 16 )
+        end
     end
 
     --------------------------------------------------------------------------------------
@@ -278,38 +287,44 @@ function love.draw()
         love.graphics.circle("fill", v.x, v.y, 2.5, 11)
     end
 
-    love.graphics.setPointSize(3)
-    tree:draw_tree( mx, my )
+    if do_draw_quadtree_graph then
+        love.graphics.setPointSize(3)
+        tree:draw_tree( mx, my )
+    end
 
 
     --------------------------------------------------------------------------------------
     
     -- debug
-    love.graphics.setColor(0.9,0.8,0.1,0.5)
-    for _,v in ipairs(query_boxes) do
-        love.graphics.rectangle("line", v.x, v.y, v.width, v.height)
+    if do_draw_new_plant_query_areas then
+        love.graphics.setColor(0.9,0.8,0.1,0.5)
+        for _,v in ipairs(query_boxes) do
+            love.graphics.rectangle("line", v.x, v.y, v.width, v.height)
+        end
     end
 
     -- quadtree subdivision visualisation
-    love.graphics.setLineWidth(4)
-    for k,v in pairs(subdivided_quads_vis) do
-        love.graphics.setColor( 0.0, 1.0, 0.0, v.age )
-        love.graphics.rectangle("line",
-                                v.quad.boundary.x,
-                                v.quad.boundary.y,
-                                v.quad.boundary.width,
-                                v.quad.boundary.height
-                            )
-    end
-
-    for k,v in pairs(unsubdivided_qauds_vis) do
-        love.graphics.setColor( 1.0, 0.0, 0.0, v.age )
-        love.graphics.rectangle("fill",
-                                v.quad.boundary.x,
-                                v.quad.boundary.y,
-                                v.quad.boundary.width,
-                                v.quad.boundary.height
-                            )
+    if do_draw_subdivision_changes then
+        love.graphics.setLineWidth(4)
+        for k,v in pairs(subdivided_quads_vis) do
+            love.graphics.setColor( 0.0, 1.0, 0.0, v.age )
+            love.graphics.rectangle("line",
+                                    v.quad.boundary.x,
+                                    v.quad.boundary.y,
+                                    v.quad.boundary.width,
+                                    v.quad.boundary.height
+                                )
+        end
+    
+        for k,v in pairs(unsubdivided_qauds_vis) do
+            love.graphics.setColor( 1.0, 0.0, 0.0, v.age )
+            love.graphics.rectangle("fill",
+                                    v.quad.boundary.x,
+                                    v.quad.boundary.y,
+                                    v.quad.boundary.width,
+                                    v.quad.boundary.height
+                                )
+        end
     end
 
     -- diagnostics
@@ -393,6 +408,21 @@ function love.keypressed(key, code, isrepeat)
     end
     if code == "space" then
         is_plants_paused = not is_plants_paused
+    end
+    if code == "1" then
+        do_draw_quadtree_graph = not do_draw_quadtree_graph
+    end
+    if code == "2" then
+        do_draw_quadtree_quads = not do_draw_quadtree_quads
+    end
+    if code == "3" then
+        do_draw_subdivision_changes = not do_draw_subdivision_changes
+    end
+    if code == "4" then
+        do_draw_new_plant_query_areas = not do_draw_new_plant_query_areas
+    end
+    if code == "5" then
+        do_draw_plants = not do_draw_plants
     end
 end
 

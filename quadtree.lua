@@ -1,16 +1,13 @@
 local tables = require("tables")
-local signal = require "signal"
+local signal = require("signal")
 -- Quadtree node class
 local Quadtree = {}
 Quadtree.__index = Quadtree
 
--- TODO: 
--- [✓] fix re-insert after subdivide
--- [ ] fix unsubdivide
--- [✓] draw live inspection of tree based on mouse position
 
 local font_medium = love.graphics.newFont(20)
 local font_small = love.graphics.newFont(8.5)
+
 
 function Quadtree:new(x, y, width, height, capacity, name)
     local self = setmetatable({}, Quadtree)
@@ -129,11 +126,7 @@ function Quadtree:remove(point)
                         self.northwest:remove(point) or
                         self.southeast:remove(point) or
                         self.southwest:remove(point)
-        -- if removed then
-        --     self:unsubdivide_if_empty()
-        -- end
         local ret_unsub = self:unsubdivide_if_empty()
-        -- print(string.format("remove  (uns) %s: %s", self.name, ret_unsub))
         return removed
     end
 
@@ -152,20 +145,20 @@ function Quadtree:unsubdivide_if_empty()
         not self.northwest.divided and
         not self.southeast.divided and
         not self.southwest.divided then
-            -- print(string.format("unsubdivide %s", self.name))
-            -- print(string.format("unsubdivide %s", self.northeast.name))
+
             self.signals:emit("unsubdivided", self.northeast)
             self.northeast = nil
-            -- print(string.format("unsubdivide %s", self.northwest.name))
+
             self.signals:emit("unsubdivided", self.northwest)
             self.northwest = nil
-            -- print(string.format("unsubdivide %s", self.southeast.name))
+
             self.signals:emit("unsubdivided", self.southeast)
             self.southeast = nil
-            -- print(string.format("unsubdivide %s", self.southwest.name))
+
             self.signals:emit("unsubdivided", self.southwest)
             self.southwest = nil
             self.divided = false
+
             return true
     else
         return false
@@ -174,15 +167,6 @@ end
 
 
 function Quadtree:draw()
-    -- love.graphics.setLineWidth(1)
-    -- love.graphics.setColor(0.243, 0.443, 0.671, 0.05)
-    -- love.graphics.rectangle("line", self.boundary.x, self.boundary.y, self.boundary.width, self.boundary.height)
-    -- if self.divided then
-    --     self.northeast:draw()
-    --     self.northwest:draw()
-    --     self.southeast:draw()
-    --     self.southwest:draw()
-    -- end
     love.graphics.setLineWidth(1)
     love.graphics.setColor(0.243, 0.443, 0.671, 0.25)
     self:_draw()
@@ -219,13 +203,24 @@ function Quadtree:draw_tree( inspect_x, inspect_y )
     local window_width, window_height = love.graphics.getDimensions()
     ----
 
-    -- self:_draw_tree( x, y, depth, width, quadrant_offset)
-    self:_draw_tree( window_width/2, 100, window_width/2.55, 60, depth, inspect_x, inspect_y)
+    local max_depth = self:_draw_tree( window_width/2, 100, window_width/2.55, 60, depth, inspect_x, inspect_y)
+    max_depth = max_depth -1 
+
+    love.graphics.setFont(font_medium)
+    love.graphics.setLineWidth(1.0)
+    
+    -- draw depth indicators
+    local top_y = 100
+    for this_depth = 1,max_depth do
+        love.graphics.setColor(1,1,1,0.25)
+        love.graphics.print(string.format("%i", this_depth), 30, 100 + (this_depth * 60) - 5)
+        love.graphics.setColor(1,1,1,0.025)
+        love.graphics.rectangle("fill", 25,100 + (this_depth * 60) - 20 , window_width - 50, 50)
+    end
 end
 
 
 function Quadtree:_draw_tree(x,y, spacing_x, spacing_y, depth, inspect_x, inspect_y )
-    -- love.graphics.circle("line",x,y, 5)
     local hilight_color = {1.0, 0.8, 0.1, .85}
     local lolight_color = {0.35, 1.0, 0.1, 0.1}
 
@@ -238,7 +233,9 @@ function Quadtree:_draw_tree(x,y, spacing_x, spacing_y, depth, inspect_x, inspec
     for i, point in ipairs(self.points) do
         love.graphics.points( x + i *5, y + i *2.5 )
     end
-    
+
+    local max_depth = 0
+
     if self.divided then
         local offset_x = spacing_x
         local offset_y = spacing_y
@@ -265,12 +262,16 @@ function Quadtree:_draw_tree(x,y, spacing_x, spacing_y, depth, inspect_x, inspec
         end
 
         depth = depth +1
-        self.northeast:_draw_tree( children_positions[1][1],children_positions[1][2], spacing_x/2.75, spacing_y, depth, inspect_x, inspect_y )
-        self.northwest:_draw_tree( children_positions[2][1],children_positions[2][2], spacing_x/2.75, spacing_y, depth, inspect_x, inspect_y )
-        self.southeast:_draw_tree( children_positions[3][1],children_positions[3][2], spacing_x/2.75, spacing_y, depth, inspect_x, inspect_y )
-        self.southwest:_draw_tree( children_positions[4][1],children_positions[4][2], spacing_x/2.75, spacing_y, depth, inspect_x, inspect_y )
-
+        local child_depth = self.northeast:_draw_tree( children_positions[1][1],children_positions[1][2], spacing_x/2.75, spacing_y, depth, inspect_x, inspect_y )
+        if child_depth > max_depth then max_depth = child_depth end
+        child_depth = self.northwest:_draw_tree( children_positions[2][1],children_positions[2][2], spacing_x/2.75, spacing_y, depth, inspect_x, inspect_y )
+        if child_depth > max_depth then max_depth = child_depth end
+        child_depth = self.southeast:_draw_tree( children_positions[3][1],children_positions[3][2], spacing_x/2.75, spacing_y, depth, inspect_x, inspect_y )
+        if child_depth > max_depth then max_depth = child_depth end
+        child_depth = self.southwest:_draw_tree( children_positions[4][1],children_positions[4][2], spacing_x/2.75, spacing_y, depth, inspect_x, inspect_y )
+        if child_depth > max_depth then max_depth = child_depth end
     end
+    return max_depth + 1 
 end
 
 
@@ -303,11 +304,5 @@ function Quadtree:_inspect(point, n_points)
     return n_points
 end
 
-
 ------------------------------------------------------------------------------------------
-
-
-
-------------------------------------------------------------------------------------------
-
 return Quadtree

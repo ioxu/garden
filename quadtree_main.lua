@@ -4,6 +4,8 @@ if arg[2] == "debug" then
     require("lldebugger").start()
 end
 
+local quadtree_main = {}
+
 local plants = require "plants"
 local Quadtree = require "quadtree"
 local vector = require "vector"
@@ -146,7 +148,8 @@ local mem_usage_update_timer = 0.0
 
 -- ---------------------------------------------------------------------------------------
 
-function love.load()
+-- function love.load()
+function quadtree_main.load()
     print("dimensions:", window_width, window_height)
 
     love.mouse.setVisible( false )
@@ -166,7 +169,7 @@ function love.load()
     end
     print(" .. done (made " .. #state.plants .. " plants)")
 
-    love.graphics.setLineStyle("rough")
+    -- love.graphics.setLineStyle("rough")
 end
 
 -- ---------------------------------------------------------------------------------------
@@ -178,7 +181,8 @@ local global_time = 0.0
 local is_plants_paused = false
 
 
-function love.update(dt)
+-- function love.update(dt)
+function quadtree_main.update(dt)
     
     if global_frame % 60 == 0 then
         do_update_timer = true
@@ -237,7 +241,8 @@ function love.update(dt)
 end
 
 -- ---------------------------------------------------------------------------------------
-local do_draw_quadtree_graph = true
+-- local do_draw_quadtree_graph = true
+quadtree_main.do_draw_quadtree_graph = true
 local do_draw_quadtree_quads = true
 local do_draw_subdivision_changes = true
 local do_draw_new_plant_query_areas = true
@@ -247,7 +252,8 @@ local start_draw_timer, end_draw_timer
 local do_draw_timer = false
 local draw_timer_string = ""
 
-function love.draw()
+-- function love.draw()
+function quadtree_main.draw()
     love.graphics.clear( 0.025,0.025,0.025 )
     -- diagnostics
     if global_frame % 60 == 0 then
@@ -295,7 +301,7 @@ function love.draw()
         love.graphics.circle("fill", v.x, v.y, 2.5, 11)
     end
 
-    if do_draw_quadtree_graph then
+    if quadtree_main.do_draw_quadtree_graph then
         love.graphics.setPointSize(3)
         tree:draw_tree( mx, my )
     end
@@ -375,7 +381,8 @@ end
 
 
 -- ---------------------------------------------------------------------------------------
-function love.mousepressed(x,y,button,istouch,presses)
+-- function love.mousepressed(x,y,button,istouch,presses)
+function quadtree_main.mousepressed(x,y,button,istouch,presses)
     --
     if button ==1 then
         -- local ret = tree:inspect( {x = x, y =y} )
@@ -407,7 +414,8 @@ function love.mousepressed(x,y,button,istouch,presses)
 end
 
 
-function love.keypressed(key, code, isrepeat)
+-- function love.keypressed(key, code, isrepeat)
+function quadtree_main.keypressed(key, code, isrepeat)
     if key == "escape" then
         love.event.quit()
     end
@@ -418,7 +426,7 @@ function love.keypressed(key, code, isrepeat)
         is_plants_paused = not is_plants_paused
     end
     if code == "1" then
-        do_draw_quadtree_graph = not do_draw_quadtree_graph
+        quadtree_main.do_draw_quadtree_graph = not quadtree_main.do_draw_quadtree_graph
     end
     if code == "2" then
         do_draw_quadtree_quads = not do_draw_quadtree_quads
@@ -445,3 +453,5 @@ function love.errorhandler(msg)
         return love_errorhandler(msg)
     end
 end
+
+return quadtree_main

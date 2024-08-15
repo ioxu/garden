@@ -155,7 +155,7 @@ function quadtree_main:init()
         -- local new_plant = plants.plant:new( "qbit"..i, {x=rng:random() * window_width, y=rng:random() * window_height}, 0.0 )
         local spread = window_height * 0.8
         local new_plant = plants.plant:new( "qbit"..i, {x=(rng:random() -0.5) * spread + window_width/2, y=(rng:random() -0.5) * spread + window_height/2}, 0.0 )
-        new_plant.max_size = shaping.remap(rng:random() , 0, 1, 5, 20) --rng:random() * 5.0 + 2.5
+        new_plant.max_size = shaping.remap(rng:random() , 0, 1, 2, 7.5) --rng:random() * 5.0 + 2.5
         new_plant.max_age = rng:random() * 10.0 + 5.0
         
         new_plant.signals:register("plant_died", onPlantDie)
@@ -165,7 +165,7 @@ function quadtree_main:init()
     end
     print("[quadtree] .. done (made " .. #state.plants .. " plants)")
 
-    -- love.graphics.setLineStyle("rough")
+    love.graphics.setLineStyle("rough")
 end
 
 -- ---------------------------------------------------------------------------------------
@@ -383,7 +383,7 @@ function quadtree_main:mousepressed(x,y,button,istouch,presses)
         
         -- make a new plant at click
         local new_plant = plants.plant:new( "handplaced", {x=x, y=y}, 0.0 )
-        new_plant.max_size = shaping.remap(rng:random() , 0, 1, 5, 20) --rng:random() * 5.0 + 2.5
+        new_plant.max_size = shaping.remap(rng:random() , 0, 1, 2, 7.5) --rng:random() * 5.0 + 2.5
         new_plant.max_age = rng:random() * 10.0 + 5.0
         -- new_plant.child_spawn_max_amount = 0
         -- new_plant.immortal = true

@@ -5,4 +5,4 @@ other/
 # from here: https://love2d.org/wiki/cimgui-love
 # here: https://codeberg.org/apicici/cimgui-love/releases
 # and here: https://codeberg.org/apicici/cimgui-love
-cimgui/
+lib/cimgui/

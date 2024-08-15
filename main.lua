@@ -72,7 +72,7 @@ function love.load()
     imgui.love.Init()
     love.mouse.setVisible( false )
     
-    Scenes:init( "quadtree_main" )
+    Scenes:init( "circles_around_circles")--"quadtree_main" )
     
     -- graphics
     love.graphics.setLineStyle("rough")
@@ -132,7 +132,7 @@ end
 
 ------------------------------------------------------------------------------------------
 function Show_scenes_selector()
-    imgui.Begin("Scenes")
+    imgui.Begin("Scenes", nil, imgui.ImGuiWindowFlags_AlwaysAutoResize)
     for k,v in pairs(Scenes.states) do
         if imgui.Button(k) then
             print(string.format('Scenes selector button "%s" pressed', k))
@@ -142,6 +142,7 @@ function Show_scenes_selector()
             imgui.SetTooltip(Scenes.descriptions[k])
         end
     end
+    
     imgui.End()
 end
 

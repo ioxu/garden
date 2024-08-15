@@ -15,6 +15,8 @@ Plants = {}
 --         y = 0.0}
 -- }
 
+
+--- @class plant @define base plant class
 Plants.plant = {}
 Plants.plant.__index = Plants.plant
 
@@ -22,7 +24,11 @@ local rng = love.math.newRandomGenerator()
 rng:setSeed(os.time())
 
 
+--- @param name string the name of the new plant
+--- @param position table x and y position of new plant ({x=,y=})
+--- @param age number the initial age of the new plant
 function Plants.plant:new( name, position, age )
+    --- @class plant @define base plant class
     local instance = setmetatable( {}, Plants.plant )
     -- base
     instance.name = name or Plants.plant.name

@@ -86,8 +86,10 @@ function love.draw()
     love.graphics.setColor(1,1,1,1)
     
     -- example window
-    imgui.ShowDemoWindow()
+    -- imgui.ShowDemoWindow()
     
+    Show_scenes_selector()
+
     -- code to render imgui
     imgui.Render()
     imgui.love.RenderDrawLists()
@@ -128,13 +130,27 @@ function love.update(dt)
 end
 
 
+------------------------------------------------------------------------------------------
+function Show_scenes_selector()
+    imgui.Begin("Scenes")
+    for k,v in pairs(Scenes.states) do
+        if imgui.Button(k) then
+            print(string.format('Scenes selector button "%s" pressed', k))
+            Scenes:switch(k)
+        end
+        if imgui.IsItemHovered() then
+            imgui.SetTooltip(Scenes.descriptions[k])
+        end
+    end
+    imgui.End()
+end
+
+
+------------------------------------------------------------------------------------------
 love.mousemoved = function(x, y, ...)
     imgui.love.MouseMoved(x, y)
     if not imgui.love.GetWantCaptureMouse() then
-    --     love.mouse.setVisible( false )
-    -- else
-    --     love.mouse.setVisible( true )
-    
+
     end
 end
 
@@ -186,13 +202,22 @@ end
 
 function love.keypressed(key, code, isrepeat)
     imgui.love.KeyPressed(key)
-
     if not imgui.love.GetWantCaptureKeyboard() then
+        if key == "escape" then
+            love.event.quit()
+        end
         Scenes:keypressed( key, code, isrepeat )
     end
-            
+end
 
-    if key == "escape" then
-        love.event.quit()
+
+-- debug ---------------------------------------------------------------------------------
+local love_errorhandler = love.errorhandler
+
+function love.errorhandler(msg)
+    if lldebugger then
+        error(msg, 2)
+    else
+        return love_errorhandler(msg)
     end
 end

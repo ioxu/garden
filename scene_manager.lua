@@ -4,6 +4,7 @@
 
 return{
     states={},
+    descriptions={},
     focus={},
     action={switch=false, push=false, pop=false, newid=0},
     init=function(self, start_state)
@@ -11,7 +12,13 @@ return{
         for i,v in ipairs(love.filesystem.getDirectoryItems("scenes")) do
             if string.find(v, ".lua") then
                 print(string.format("[scene_manager] found %s", v))
-                self.states[string.gsub(v, ".lua", "")]=require("scenes." .. string.gsub(v, ".lua", ""))
+                local state_name = string.gsub(v, ".lua", "")
+                self.states[state_name]=require("scenes." .. string.gsub(v, ".lua", ""))
+                if self.states[state_name].description then
+                    self.descriptions[state_name] = self.states[state_name].description
+                else
+                    self.descriptions[state_name] = "--"
+                end
             end
         end
         if start_state then
@@ -54,13 +61,17 @@ return{
 
     mousepressed=function(self, x, y, button, ...)
         for i,v in pairs(self.focus) do
-            self.states[v]:mousepressed( x, y, button, ... )
+            if self.states[v].mousepressed then
+                self.states[v]:mousepressed( x, y, button, ... )
+            end
         end
     end,
 
     keypressed=function(self, key, code, isrepeat)
         for i,v in pairs( self.focus) do
-            self.states[v]:keypressed( key, code, isrepeat )
+            if self.states[v].keypressed then
+                self.states[v]:keypressed( key, code, isrepeat )
+            end
         end
     end
 }

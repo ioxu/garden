@@ -1,6 +1,7 @@
 local vector = require "vector"
 
 local quadtree_main = {}
+quadtree_main.description = "testing quadtree.lua"
 
 local plants = require "plants"
 local Quadtree = require "quadtree"
@@ -146,7 +147,7 @@ local mem_usage_update_timer = 0.0
 
 -- function love.load()
 -- function quadtree_main.load()
-function quadtree_main.init()
+function quadtree_main:init()
     print("[quadtree] initialise")
     print("[quadtree] dimensions:", window_width, window_height)
     print("[quadtree] making plants ..")
@@ -374,6 +375,7 @@ end
 -- ---------------------------------------------------------------------------------------
 -- function love.mousepressed(x,y,button,istouch,presses)
 function quadtree_main:mousepressed(x,y,button,istouch,presses)
+    print("mouse pressed", global_time)
     --
     if button ==1 then
         -- local ret = tree:inspect( {x = x, y =y} )
@@ -407,9 +409,9 @@ end
 
 -- function love.keypressed(key, code, isrepeat)
 function quadtree_main:keypressed(key, code, isrepeat)
-    if key == "escape" then
-        love.event.quit()
-    end
+    -- if key == "escape" then
+    --     love.event.quit()
+    -- end
     if code == "f6" then
         collectgarbage()
     end
@@ -433,16 +435,5 @@ function quadtree_main:keypressed(key, code, isrepeat)
     end
 end
 
-
--- debug ---------------------------------------------------------------------------------
-local love_errorhandler = love.errorhandler
-
-function love.errorhandler(msg)
-    if lldebugger then
-        error(msg, 2)
-    else
-        return love_errorhandler(msg)
-    end
-end
 
 return quadtree_main

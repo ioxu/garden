@@ -1,9 +1,9 @@
-local signal = require "signal"
-local palette = require "palette"
-local shaping = require "shaping"
-local tables = require "tables"
-local color = require "color"
-local vector = require "vector"
+local signal = require "lib.signal"
+local palette = require "lib.palette"
+local shaping = require "lib.shaping"
+local tables = require "lib.tables"
+local color = require "lib.color"
+local vector = require "lib.vector"
 
 Plants = {}
 

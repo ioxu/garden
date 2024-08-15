@@ -42,11 +42,11 @@ print("DEBUG_MODE ", DEBUG_MODE)
 -- I have put the .dll in the ./cimgui directory and ignored ./cimgui from git.
 print("-----------------------------------\ncimgui")
 print("based on version 1.90.8 (docking branch) of Dear ImGui and LÖVE 11.5")
-local lib_path = love.filesystem.getSource() .. "/cimgui"
+local lib_path = love.filesystem.getSource() .. "/lib/cimgui"
 -- local extension = jit.os == "Windows" and "dll" or jit.os == "Linux" and "so" or jit.os == "OSX" and "dylib"
 package.cpath = string.format("%s;%s/?.%s", package.cpath, lib_path, "dll")
 print("package.cpath: ", package.cpath)
-local imgui = require "cimgui"
+local imgui = require "lib.cimgui"
 print("-----------------------------------")
 
 
@@ -61,7 +61,7 @@ local font_small = love.graphics.newFont(10)
 -- scenes
 -- Scenes = {}
 -- Scenes["quadtree_main"] = require"quadtree_main"
-Scenes = require("scene_manager")
+Scenes = require("lib.scene_manager")
 
 
 

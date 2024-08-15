@@ -1,12 +1,12 @@
-local vector = require "vector"
+local vector = require "lib.vector"
 
 local quadtree_main = {}
 quadtree_main.description = "testing quadtree.lua"
 
-local plants = require "plants"
-local Quadtree = require "quadtree"
-local vector = require "vector"
-local shaping = require "shaping"
+local plants = require "lib.plants"
+local Quadtree = require "lib.quadtree"
+local vector = require "lib.vector"
+local shaping = require "lib.shaping"
 
 
 

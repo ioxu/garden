@@ -1,5 +1,5 @@
-local tables = require("tables")
-local signal = require("signal")
+local tables = require("lib.tables")
+local signal = require("lib.signal")
 -- Quadtree node class
 local Quadtree = {}
 Quadtree.__index = Quadtree

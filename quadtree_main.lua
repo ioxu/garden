@@ -1,8 +1,4 @@
 local vector = require "vector"
-if arg[2] == "debug" then
-    print("STARTING DEBUGGER")
-    require("lldebugger").start()
-end
 
 local quadtree_main = {}
 
@@ -11,7 +7,7 @@ local Quadtree = require "quadtree"
 local vector = require "vector"
 local shaping = require "shaping"
 
-io.stdout:setvbuf("no")
+
 
 -- print("module:", plants)
 -- local p = plants.plant:new( "qbit", {-20.0, 50.00}, 0.0 )
@@ -214,10 +210,6 @@ function quadtree_main.update(dt)
         end
     end
 
-    if love.keyboard.isDown('lctrl') and love.keyboard.isDown('f5') then
-        print("BREAK!")
-    end
-
     -- quadtree subdivision visualisation
     for i,v in pairs(subdivided_quads_vis) do
         v.age = v.age - dt
@@ -405,8 +397,8 @@ function quadtree_main.mousepressed(x,y,button,istouch,presses)
     -- the actual removal is done in the update loop, because
     -- doing it here is the wrong place
     if button == 2 then
-        print("[delete] ----------------")
         local in_rect = tree:queryRange( {x = x-50, y=y-50, width=100, height=100} , {} )
+        print(string.format("[delete] deleting with right-mouse %i points", #in_rect) )
         for k,v in pairs( in_rect ) do
             table.insert(selected_point_indices_to_remove, v.userdata)
         end

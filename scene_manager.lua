@@ -1,0 +1,66 @@
+
+-- https://love2d.org/forums/viewtopic.php?t=92877&sid=6a58e932e8ba60eea54d7632acfcdbe0
+-- user pauljessup
+
+return{
+    states={},
+    focus={},
+    action={switch=false, push=false, pop=false, newid=0},
+    init=function(self, start_state)
+        --gets all the game states from the game states directory
+        for i,v in ipairs(love.filesystem.getDirectoryItems("scenes")) do
+            if string.find(v, ".lua") then
+                print(string.format("[scene_manager] found %s", v))
+                self.states[string.gsub(v, ".lua", "")]=require("scenes." .. string.gsub(v, ".lua", ""))
+            end
+        end
+        if start_state then
+            self:push(start_state)
+        end
+    end,
+    push=function(self, state)
+        self.states[state]:init()
+        self.focus[#self.focus+1]=state
+    end,
+    pop=function(self)
+        local cfocus=self:currentFocus()
+        if #self.focus>1 then
+            if(self.states[cfocus].close~=nil) then
+                self.states[cfocus]:close()
+            end
+            self.focus[#self.focus]=nil 
+        end
+    end,
+    switch=function(self, state)
+        for i,v in ipairs(self.focus) do
+            self.focus[i]=nil
+        end
+        self.focus={}
+        self:push(state)
+    end,
+    currentFocus=function(self)
+        return self.focus[#self.focus]
+    end,
+
+    update=function(self, dt)
+        self.states[self:currentFocus()]:update(dt)
+    end,
+
+    draw=function(self)
+        for i,v in pairs(self.focus) do
+            self.states[v]:draw()
+        end
+    end,
+
+    mousepressed=function(self, x, y, button, ...)
+        for i,v in pairs(self.focus) do
+            self.states[v]:mousepressed( x, y, button, ... )
+        end
+    end,
+
+    keypressed=function(self, key, code, isrepeat)
+        for i,v in pairs( self.focus) do
+            self.states[v]:keypressed( key, code, isrepeat )
+        end
+    end
+}

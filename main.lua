@@ -58,14 +58,22 @@ local font_medium = love.graphics.newFont(20)
 local font_small = love.graphics.newFont(10)
 
 ------------------------------------------------------------------------------------------
-local quadtree_main = require"quadtree_main"
+-- scenes
+-- Scenes = {}
+-- Scenes["quadtree_main"] = require"quadtree_main"
+Scenes = require("scene_manager")
 
+
+
+------------------------------------------------------------------------------------------
 local gloabl_time = 0
 
 function love.load()
     imgui.love.Init()
-    quadtree_main.load()
-
+    love.mouse.setVisible( false )
+    
+    Scenes:init( "quadtree_main" )
+    
     -- graphics
     love.graphics.setLineStyle("rough")
 end
@@ -73,16 +81,24 @@ end
 
 function love.draw()
     
-    quadtree_main.draw()
+    Scenes:draw()
+    
     love.graphics.setColor(1,1,1,1)
-
+    
     -- example window
     imgui.ShowDemoWindow()
     
     -- code to render imgui
     imgui.Render()
     imgui.love.RenderDrawLists()
-
+    
+    -- TODO: need some better way of coercing the mouse cursor
+    if not imgui.love.GetWantCaptureMouse() then
+        love.mouse.setVisible( false )
+    else
+        love.mouse.setVisible( true )
+    end
+    
     -- 
     if DEBUG_MODE then
         love.graphics.setColor( 1.0, 0.2, 0.2, 0.5)
@@ -96,10 +112,12 @@ end
 
 function love.update(dt)
     gloabl_time = gloabl_time + dt
-    quadtree_main.update(dt)
+
+    Scenes:update(dt)
+    
     imgui.love.Update(dt)
     imgui.NewFrame()
-
+    
     -- breakpoint ------------------------------------------------------------------------
     if love.keyboard.isDown('lctrl') and love.keyboard.isDown('f4') then
         if DEBUG_MODE then
@@ -113,23 +131,29 @@ end
 love.mousemoved = function(x, y, ...)
     imgui.love.MouseMoved(x, y)
     if not imgui.love.GetWantCaptureMouse() then
-        -- your code here
+    --     love.mouse.setVisible( false )
+    -- else
+    --     love.mouse.setVisible( true )
+    
     end
 end
+
 
 love.mousepressed = function(x, y, button, ...)
     imgui.love.MousePressed(button)
     if not imgui.love.GetWantCaptureMouse() then
-        quadtree_main.mousepressed(x,y,button, ...)
+        Scenes:mousepressed( x, y, button, ... )
     end
 end
+
 
 love.mousereleased = function(x, y, button, ...)
     imgui.love.MouseReleased(button)
     if not imgui.love.GetWantCaptureMouse() then
-        -- your code here 
+        --
     end
 end
+
 
 love.wheelmoved = function(x, y)
     imgui.love.WheelMoved(x, y)
@@ -138,13 +162,6 @@ love.wheelmoved = function(x, y)
     end
 end
 
--- function love.keypressed(key, ...)
---     print(key)
---     -- imgui.love.KeyPressed(key)
---     -- if not imgui.love.GetWantCaptureKeyboard() then
---     --     -- your code here 
---     -- end
--- end
 
 love.keyreleased = function(key, ...)
     imgui.love.KeyReleased(key)
@@ -153,6 +170,7 @@ love.keyreleased = function(key, ...)
     end
 end
 
+
 love.textinput = function(t)
     imgui.love.TextInput(t)
     if not imgui.love.GetWantCaptureKeyboard() then
@@ -160,17 +178,19 @@ love.textinput = function(t)
     end
 end
 
+
 love.quit = function()
     return imgui.love.Shutdown()
 end
+
 
 function love.keypressed(key, code, isrepeat)
     imgui.love.KeyPressed(key)
 
     if not imgui.love.GetWantCaptureKeyboard() then
-        
-        quadtree_main.keypressed(key, code, isrepeat)
+        Scenes:keypressed( key, code, isrepeat )
     end
+            
 
     if key == "escape" then
         love.event.quit()

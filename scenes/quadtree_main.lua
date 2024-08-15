@@ -145,12 +145,11 @@ local mem_usage_update_timer = 0.0
 -- ---------------------------------------------------------------------------------------
 
 -- function love.load()
-function quadtree_main.load()
-    print("dimensions:", window_width, window_height)
-
-    love.mouse.setVisible( false )
-
-    print("making plants ..")
+-- function quadtree_main.load()
+function quadtree_main.init()
+    print("[quadtree] initialise")
+    print("[quadtree] dimensions:", window_width, window_height)
+    print("[quadtree] making plants ..")
     for i = 1,8,1 do
         -- local new_plant = plants.plant:new( "qbit"..i, {x=rng:random() * window_width, y=rng:random() * window_height}, 0.0 )
         local spread = window_height * 0.8
@@ -163,7 +162,7 @@ function quadtree_main.load()
         table.insert(state.plants, new_plant )
         tree:insert( { x= new_plant.position.x, y = new_plant.position.y, userdata = new_plant} )
     end
-    print(" .. done (made " .. #state.plants .. " plants)")
+    print("[quadtree] .. done (made " .. #state.plants .. " plants)")
 
     -- love.graphics.setLineStyle("rough")
 end
@@ -178,7 +177,7 @@ local is_plants_paused = false
 
 
 -- function love.update(dt)
-function quadtree_main.update(dt)
+function quadtree_main:update(dt)
     
     if global_frame % 60 == 0 then
         do_update_timer = true
@@ -245,7 +244,7 @@ local do_draw_timer = false
 local draw_timer_string = ""
 
 -- function love.draw()
-function quadtree_main.draw()
+function quadtree_main:draw()
     love.graphics.clear( 0.025,0.025,0.025 )
     -- diagnostics
     if global_frame % 60 == 0 then
@@ -374,7 +373,7 @@ end
 
 -- ---------------------------------------------------------------------------------------
 -- function love.mousepressed(x,y,button,istouch,presses)
-function quadtree_main.mousepressed(x,y,button,istouch,presses)
+function quadtree_main:mousepressed(x,y,button,istouch,presses)
     --
     if button ==1 then
         -- local ret = tree:inspect( {x = x, y =y} )
@@ -407,7 +406,7 @@ end
 
 
 -- function love.keypressed(key, code, isrepeat)
-function quadtree_main.keypressed(key, code, isrepeat)
+function quadtree_main:keypressed(key, code, isrepeat)
     if key == "escape" then
         love.event.quit()
     end

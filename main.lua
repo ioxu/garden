@@ -17,13 +17,18 @@ print([[
 
 -- cmdline -------------------------------------------------------------------------------
 print("-----------------------------------\ncli")
+-- lua-local-debugger for VSCode: https://github.com/tomblind/local-lua-debugger-vscode
 lldebugger = nil
 local DEBUG_MODE = false
 for k,v in pairs(arg) do
     if v == "debug" then
-        DEBUG_MODE = true
-        lldebugger = require("lldebugger")
-        lldebugger.start()
+        if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+            DEBUG_MODE = true
+            lldebugger = require("lldebugger")
+            lldebugger.start()
+        else
+            print("lldebugger unavailable")
+        end
     end
 end
 

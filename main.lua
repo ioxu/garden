@@ -49,6 +49,8 @@ print("-----------------------------------")
 love.window.setTitle("garden")
 io.stdout:setvbuf("no")
 
+local font_medium = love.graphics.newFont(20)
+local font_small = love.graphics.newFont(10)
 
 ------------------------------------------------------------------------------------------
 local quadtree_main = require"quadtree_main"
@@ -75,6 +77,15 @@ function love.draw()
     -- code to render imgui
     imgui.Render()
     imgui.love.RenderDrawLists()
+
+    -- 
+    if DEBUG_MODE then
+        love.graphics.setColor( 1.0, 0.2, 0.2, 0.5)
+        love.graphics.setFont(font_medium)
+        love.graphics.print( "DEBUG", love.graphics.getWidth() /2 - 35, 20 )
+        love.graphics.setFont(font_small)
+        love.graphics.print( "(ctrl-F4 to breakpoint)", love.graphics.getWidth() /2 - 53, 44 )
+    end
 end
 
 

@@ -32,49 +32,29 @@ function Circles:update(dt)
     local ss = math.sin( global_time * 1.5 )
     local rr = shaping.remap( ss, -1.0, 1.0, 20.0, 100) --rng:random(10.0, 50.0)
     outer_circles[1] = {x=inner_circle.x, y=inner_circle.y - inner_circle.radius - rr, radius = rr}
-    local ss2 = math.sin( (global_time + 0.735)* 2.5 )
-    local rr2 = shaping.remap( ss2, -1.0, 1.0, 20.0, 100)
 
-    -- A = inner circle position
-    -- B = 1st outer circle position
-    -- C = position of 2nd outer circle
-    -- a = distance between BC
-    -- b = distance between AC
-    -- c = distance between AB
-    
-    -- distance from A to B
-    -- local a = outer_circles[1].radius + rr2
-    -- local b = inner_circle.radius + rr2
-    -- local bb = b^2
-    -- local c = inner_circle.radius + outer_circles[1].radius --vector.distance( inner_circle.x, inner_circle.y, outer_circles[1].x, outer_circles[1].y )
-    -- -- normalised c
-    -- local c_norm = { x= (outer_circles[1].x - inner_circle.x)/c, y=(outer_circles[1].y - inner_circle.y)/c } -- vector.normalised(  )
-    -- -- length of projection of AC onto AB
-    -- local c_proj_l = (bb + c^2 - a^2)/(2*c)
-    -- -- height of the perpendicular 
-    -- local h = math.sqrt( bb - c_proj_l^2 )
-    
-    -- local x1 = inner_circle.x + c_proj_l * c_norm.x - h * c_norm.y
-    -- local y1 = inner_circle.y + c_proj_l * c_norm.y + h * c_norm.x
-    -- outer_circles[2] = {x=x1, y=y1, radius = rr2}
-    
-    -- local x1 = inner_circle.x + c_proj_l * c_norm.x + h * c_norm.y
-    -- local y1 = inner_circle.y + c_proj_l * c_norm.y - h * c_norm.x
-    -- outer_circles[3] = {x=x1, y=y1, radius = rr2}
+    for k=2,15 do
 
-    local Cx, Cy = geometry.findThirdTriangleVertex( inner_circle.x,
-                                                inner_circle.y,
-                                                outer_circles[1].x,
-                                                outer_circles[1].y,
-                                                inner_circle.radius + outer_circles[1].radius,
-                                                inner_circle.radius + rr2,
-                                                outer_circles[1].radius + rr2 )
-    print("oc2",Cx, Cy)
-    outer_circles[2] = {x=Cx, y=Cy, radius=rr2}
+        local ss2 = math.sin( (global_time + k * 3.5 ) * 2.5 )
+        -- local ss2 = math.sin( (global_time + k * 3.5 ) * shaping.remap(math.fmod(k*1.7013553,1.0), 0.0, 1.0, 1.5, 4.5 ) )
+        local rr2 = shaping.remap( ss2, -1.0, 1.0, 20.0, 100)
+        -- local rr2 = shaping.remap( ss2, -1.0, 1.0, 10.0, 20.0)
+        
+        local Cx, Cy = geometry.findThirdTriangleVertex( inner_circle.x,
+            inner_circle.y,
+            outer_circles[k-1].x,
+            outer_circles[k-1].y,
+            inner_circle.radius + outer_circles[k-1].radius,
+            inner_circle.radius + rr2,
+            outer_circles[k-1].radius + rr2 )
 
+
+        outer_circles[k] = {x=Cx, y=Cy, radius=rr2}
+    end
 end
 
-local little_circle_margin = 4
+
+local little_circle_margin = 8
 
 function Circles:draw(dt)
 
@@ -87,7 +67,7 @@ function Circles:draw(dt)
     
     new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 - 0.05, 1.0 ), 0.85, 0.3)
     love.graphics.setColor( new_r, new_g, new_b )
-    love.graphics.print("CIRCLES", screen_centre[1] - fx/2, screen_centre[2] - fy/2)
+    -- love.graphics.print("CIRCLES", screen_centre[1] - fx/2, screen_centre[2] - fy/2)
     
     love.graphics.setLineWidth(1)
     love.graphics.circle( "line", screen_centre[1], screen_centre[2], 100)
@@ -105,9 +85,20 @@ function Circles:draw(dt)
     love.graphics.setColor( new_r, new_g, new_b )
     love.graphics.setLineWidth(2)
     love.graphics.line( inner_circle.x, inner_circle.y, outer_circles[1].x, outer_circles[1].y )
+    
+    love.graphics.line( outer_circles[1].x, outer_circles[1].y, outer_circles[2].x, outer_circles[2].y)
+    love.graphics.line( inner_circle.x, inner_circle.y, outer_circles[2].x, outer_circles[2].y)
+    
+    love.graphics.setColor( new_r, new_g, new_b, 0.25 )
+    for k = 2,15 do
+        draw.dashLine( {x=outer_circles[k-1].x, y=outer_circles[k-1].y}, {x=outer_circles[k].x, y=outer_circles[k].y}, 5, 5 )
+        draw.dashLine( {x=inner_circle.x, y=inner_circle.y}, {x=outer_circles[k].x, y=outer_circles[k].y}, 5, 5 )
+    end
 
-    draw.dashLine( {x=outer_circles[1].x, y=outer_circles[1].y}, {x=outer_circles[2].x, y=outer_circles[2].y}, 5, 5 )
-    draw.dashLine( {x=inner_circle.x, y=inner_circle.y}, {x=outer_circles[2].x, y=outer_circles[2].y}, 5, 5 )
+    new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 - 0.15, 1.0 ), 0.85, 0.3)
+    love.graphics.setColor( new_r, new_g, new_b )
+    love.graphics.print("CIRCLES", screen_centre[1] - fx/2, screen_centre[2] - fy/2)
+
 end
 
 function Circles:mousepressed(x,y,button,istouch,presses)

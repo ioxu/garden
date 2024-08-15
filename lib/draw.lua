@@ -4,6 +4,7 @@ Draw={}
 local gr = love.graphics
 
 -- https://love2d.org/forums/viewtopic.php?t=83295
+-- author: Ref
 function Draw.dashLine( p1, p2, dash, gap )
     -- direct
     local dy, dx = p2.y - p1.y, p2.x - p1.x
@@ -21,3 +22,4 @@ function Draw.dashLine( p1, p2, dash, gap )
  end
 
 return Draw
+

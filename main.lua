@@ -100,7 +100,12 @@ function love.draw()
     else
         love.mouse.setVisible( true )
     end
-    
+   
+    love.graphics.setColor(1.0,1.0,1.0,0.5)
+    love.graphics.circle("fill", love.mouse.getX(), love.mouse.getY(), 3.25)
+    local fps = love.timer.getFPS()
+    love.graphics.setFont(font_medium)
+    love.graphics.print(string.format("%i",fps), 10, 10)
     -- 
     if DEBUG_MODE then
         love.graphics.setColor( 1.0, 0.2, 0.2, 0.5)

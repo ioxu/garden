@@ -32,7 +32,7 @@ function Blank:draw(dt)
 end
 
 function Blank:mousepressed(x,y,button,istouch,presses)
-    print("mouse pressed ", global_time)
+    -- print("mouse pressed ", global_time)
 end
 
 return Blank

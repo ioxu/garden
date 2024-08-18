@@ -16,7 +16,10 @@ rng:setSeed( os.time() )
 local inner_circle = {}
 local outer_circles = {}
 
+local is_paused = false
+
 local screen_centre = {love.graphics.getWidth()/2, love.graphics.getHeight()/2}
+
 
 function Circles:init()
     print("[circles] init")
@@ -27,34 +30,41 @@ end
 
 function Circles:update(dt)
     love.graphics.setLineStyle("smooth")
-    global_time = global_time + dt
 
-    local ss = math.sin( global_time * 1.5 )
-    local rr = shaping.remap( ss, -1.0, 1.0, 20.0, 100) --rng:random(10.0, 50.0)
-    outer_circles[1] = {x=inner_circle.x, y=inner_circle.y - inner_circle.radius - rr, radius = rr}
+    if is_paused then
+        return
+    else
+        global_time = global_time + dt
 
-    for k=2,15 do
+        local ss = math.sin( global_time * 1.5 )
+        local rr = shaping.remap( ss, -1.0, 1.0, 20.0, 100) --rng:random(10.0, 50.0)
+        outer_circles[1] = {x=inner_circle.x, y=inner_circle.y - inner_circle.radius - rr, radius = rr}
 
-        local ss2 = math.sin( (global_time + k * 3.5 ) * 2.5 )
-        -- local ss2 = math.sin( (global_time + k * 3.5 ) * shaping.remap(math.fmod(k*1.7013553,1.0), 0.0, 1.0, 1.5, 4.5 ) )
-        local rr2 = shaping.remap( ss2, -1.0, 1.0, 20.0, 100)
-        -- local rr2 = shaping.remap( ss2, -1.0, 1.0, 10.0, 20.0)
-        
-        local Cx, Cy = geometry.findThirdTriangleVertex( inner_circle.x,
-            inner_circle.y,
-            outer_circles[k-1].x,
-            outer_circles[k-1].y,
-            inner_circle.radius + outer_circles[k-1].radius,
-            inner_circle.radius + rr2,
-            outer_circles[k-1].radius + rr2 )
+        for k=2,15 do
+
+            local ss2 = math.sin( (global_time + k * 3.5 ) * 2.5 )
+            -- local ss2 = math.sin( (global_time + k * 3.5 ) * shaping.remap(math.fmod(k*1.7013553,1.0), 0.0, 1.0, 1.5, 4.5 ) )
+            local rr2 = shaping.remap( ss2, -1.0, 1.0, 20.0, 100)
+            -- local rr2 = shaping.remap( ss2, -1.0, 1.0, 10.0, 20.0)
+            
+            local Cx, Cy = geometry.findThirdTriangleVertex( inner_circle.x,
+                inner_circle.y,
+                outer_circles[k-1].x,
+                outer_circles[k-1].y,
+                inner_circle.radius + outer_circles[k-1].radius,
+                inner_circle.radius + rr2,
+                outer_circles[k-1].radius + rr2,
+                "right" )
 
 
-        outer_circles[k] = {x=Cx, y=Cy, radius=rr2}
+            outer_circles[k] = {x=Cx, y=Cy, radius=rr2}
+        end
+
     end
 end
 
-
 local little_circle_margin = 8
+
 
 function Circles:draw(dt)
 
@@ -74,12 +84,24 @@ function Circles:draw(dt)
     love.graphics.setLineWidth(4)
     love.graphics.circle( "line", inner_circle.x, inner_circle.y, inner_circle.radius - little_circle_margin )
     
+    
+    love.graphics.setLineWidth(4)
     new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 + 0.05, 1.0 ), 0.85, 0.3)
     love.graphics.setColor( new_r, new_g, new_b )
     for k,v in pairs(outer_circles) do
-        love.graphics.circle("line", v.x, v.y, v.radius - little_circle_margin )
+        love.graphics.circle("line", v.x, v.y, v.radius - little_circle_margin, 128 )
     end
     
+    new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 - 0.1, 1.0 ), 0.3, 0.5)
+    love.graphics.setColor( new_r, new_g, new_b, 1.0 )
+    
+    for k,v in pairs(outer_circles) do
+        local cr = math.max(v.radius - little_circle_margin * 3.0, 1.0)
+        love.graphics.setLineWidth( math.min(16, cr + little_circle_margin )) -- math.min(16, cr ))
+        love.graphics.circle("line", v.x, v.y, cr, 128 )
+    end
+
+
     
     new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 + 0.3, 1.0 ), 0.85, 0.3)
     love.graphics.setColor( new_r, new_g, new_b )
@@ -102,7 +124,13 @@ function Circles:draw(dt)
 end
 
 function Circles:mousepressed(x,y,button,istouch,presses)
-    print("mouse pressed ", global_time)
+    -- print("mouse pressed ", global_time)
 end
 
+function Circles:keypressed( key, code, isrepeat )
+    if code == "space" then
+        is_paused = not is_paused
+    end
+end
+ 
 return Circles

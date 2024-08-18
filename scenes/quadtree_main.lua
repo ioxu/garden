@@ -375,7 +375,7 @@ end
 -- ---------------------------------------------------------------------------------------
 -- function love.mousepressed(x,y,button,istouch,presses)
 function quadtree_main:mousepressed(x,y,button,istouch,presses)
-    print("mouse pressed", global_time)
+    -- print("mouse pressed", global_time)
     --
     if button ==1 then
         -- local ret = tree:inspect( {x = x, y =y} )

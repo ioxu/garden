@@ -53,8 +53,7 @@ function Circles:update(dt)
                 outer_circles[k-1].y,
                 inner_circle.radius + outer_circles[k-1].radius,
                 inner_circle.radius + rr2,
-                outer_circles[k-1].radius + rr2,
-                "right" )
+                outer_circles[k-1].radius + rr2) --,"right" )
 
 
             outer_circles[k] = {x=Cx, y=Cy, radius=rr2}

@@ -59,10 +59,26 @@ return{
         end
     end,
 
-    mousepressed=function(self, x, y, button, ...)
+    mousepressed=function(self, x, y, button, istouch, presses)
         for i,v in pairs(self.focus) do
             if self.states[v].mousepressed then
-                self.states[v]:mousepressed( x, y, button, ... )
+                self.states[v]:mousepressed( x, y, button, istouch, presses )
+            end
+        end
+    end,
+
+    mousereleased=function(self, x, y, button, istouch, presses)
+        for i,v in pairs(self.focus) do
+            if self.states[v].mousereleased then
+                self.states[v]:mousereleased( x, y, button, istouch, presses )
+            end
+        end
+    end,
+
+    mousemoved=function(self, x, y, dx, dy, ...)
+        for i,v in pairs(self.focus) do
+            if self.states[v].mousemoved then
+                self.states[v]:mousemoved( x, y, dx, dy, ... )
             end
         end
     end,

@@ -1,6 +1,7 @@
 local vector = require "lib.vector"
 
 local quadtree_main = {}
+quadtree_main.scene_name = "quadtree_main"
 quadtree_main.description = "testing quadtree.lua"
 
 local plants = require "lib.plants"

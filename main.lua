@@ -156,7 +156,7 @@ end
 love.mousemoved = function(x, y, ...)
     imgui.love.MouseMoved(x, y)
     if not imgui.love.GetWantCaptureMouse() then
-
+        Scenes:mousemoved( x,y, ... )
     end
 end
 
@@ -172,7 +172,7 @@ end
 love.mousereleased = function(x, y, button, ...)
     imgui.love.MouseReleased(button)
     if not imgui.love.GetWantCaptureMouse() then
-        --
+        Scenes:mousereleased( x,y,button, ... )
     end
 end
 

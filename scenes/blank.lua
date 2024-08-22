@@ -1,6 +1,7 @@
 local color = require"lib.color"
 
 local Blank = {}
+Blank.scene_name = "blank"
 Blank.description = "dummy scene state"
 
 local global_time = 0 

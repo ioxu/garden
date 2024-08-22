@@ -3,10 +3,14 @@ local shaping = require"lib.shaping"
 local vector = require"lib.vector"
 local draw = require"lib.draw"
 local geometry = require"lib.geometry"
+local handles = require"lib.handles"
 
 local Circles = {}
+Circles.scene_name = "circles_around_circles"
 Circles.description = "how to place circles around the circumference of a circle\nwith each circle touching their neighbours\nas well as the center circle"
 
+local font_small = love.graphics.newFont(10)
+local font_medium_small = love.graphics.newFont(20)
 local font_medium = love.graphics.newFont(40)
 local global_time = 0
 
@@ -21,12 +25,24 @@ local is_paused = false
 local screen_centre = {love.graphics.getWidth()/2, love.graphics.getHeight()/2}
 
 
+-- hold handles
+local widgets = {}
+local interactive_circle_radius = 75
+
 function Circles:init()
     print("[circles] init")
     love.graphics.setLineStyle("smooth")
 
     inner_circle = {x = screen_centre[1], y = screen_centre[2], radius = 200}
+
+    local handle_one = handles.CircleHandle:new("circle_centre_handle",100,100, 7.5)
+    local handle_radius_control = handles.CircleHandle:new("circle_centre_handle",300,300, 7.5)
+    -- table.insert( widgets, handle_one )
+    -- print("-")
+    widgets["circle_centre_control"] = handle_one
+    widgets["circle_radius_control"] = handle_radius_control
 end
+
 
 function Circles:update(dt)
     love.graphics.setLineStyle("smooth")
@@ -60,6 +76,12 @@ function Circles:update(dt)
         end
 
     end
+    widgets["circle_radius_control"].y = widgets["circle_centre_control"].y
+    if not widgets["circle_radius_control"].dragging then
+        widgets["circle_radius_control"].x = widgets["circle_centre_control"].x + interactive_circle_radius
+    else
+      interactive_circle_radius = math.abs( widgets["circle_radius_control"].x - widgets["circle_centre_control"].x )
+    end
 end
 
 local little_circle_margin = 8
@@ -68,8 +90,16 @@ local little_circle_margin = 8
 function Circles:draw(dt)
 
     local new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1, 1.0 ), 0.85, 0.05)
-
     love.graphics.clear( new_r, new_g, new_b )
+
+    -- interactive cricle
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.circle("line", widgets["circle_centre_control"].x, widgets["circle_centre_control"].y, interactive_circle_radius)
+
+    draw.dashLine( {x=widgets["circle_centre_control"].x + widgets["circle_centre_control"].radius, y=widgets["circle_centre_control"].y},
+                    {x=widgets["circle_radius_control"].x - widgets["circle_radius_control"].radius , y=widgets["circle_radius_control"].y}, 5, 5 )
+
+    -- animated circles around circles
     local fx = font_medium:getWidth("CIRCLES")
     local fy = font_medium:getHeight()
     love.graphics.setFont(font_medium)
@@ -94,12 +124,15 @@ function Circles:draw(dt)
     new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 - 0.1, 1.0 ), 0.3, 0.5)
     love.graphics.setColor( new_r, new_g, new_b, 1.0 )
     
+
+    local average_radius = 0.0
     for k,v in pairs(outer_circles) do
         local cr = math.max(v.radius - little_circle_margin * 3.0, 1.0)
         love.graphics.setLineWidth( math.min(16, cr + little_circle_margin )) -- math.min(16, cr ))
         love.graphics.circle("line", v.x, v.y, cr, 128 )
+        average_radius = average_radius + v.radius
     end
-
+    average_radius = average_radius / #outer_circles
 
     
     new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 + 0.3, 1.0 ), 0.85, 0.3)
@@ -119,17 +152,46 @@ function Circles:draw(dt)
     new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 - 0.15, 1.0 ), 0.85, 0.3)
     love.graphics.setColor( new_r, new_g, new_b )
     love.graphics.print("CIRCLES", screen_centre[1] - fx/2, screen_centre[2] - fy/2)
+    
+    new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 - 0.25, 1.0 ), 0.85, 0.3)
+    love.graphics.setColor( new_r, new_g, new_b )
+    love.graphics.setFont(font_medium_small)
+    love.graphics.print(string.format("inner circle radius: %s\naverage radius: %0.2f", inner_circle.radius, average_radius), 20, 50)
+
+    for k,v in pairs(widgets) do
+        v:draw()
+    end
 
 end
 
-function Circles:mousepressed(x,y,button,istouch,presses)
-    -- print("mouse pressed ", global_time)
+
+function Circles:mousepressed( x, y, button, istouch, presses )
+    for k,w in pairs(widgets) do
+        w:mousepressed(x,y,button,istouch,presses)
+    end
 end
+
+
+function Circles:mousereleased( x, y, button, istouch, presses )
+    for k,w in pairs(widgets) do
+        w:mousereleased( x, y, button, istouch, presses )
+    end
+end
+
+
+function Circles:mousemoved( x, y, dx, dy, ...)
+    -- print("[Circles]:mousemoved ", x, y)
+    for k,w in pairs(widgets) do
+        w:mousemoved( x, y, dx, dy, ...)
+    end
+end
+
 
 function Circles:keypressed( key, code, isrepeat )
     if code == "space" then
         is_paused = not is_paused
     end
 end
- 
+
+
 return Circles

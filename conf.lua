@@ -1,5 +1,5 @@
 function love.conf(t)
-	print("using love.conf")
+	t.version = "11.5"
 	t.console = false
 	t.window.msaa = 0
 	t.window.fullscreen = false

@@ -28,6 +28,7 @@ local screen_centre = {love.graphics.getWidth()/2, love.graphics.getHeight()/2}
 -- hold handles
 local widgets = {}
 local interactive_circle_radius = 75
+local outer_circle_diameter = 25
 
 function Circles:init()
     print("[circles] init")
@@ -35,12 +36,20 @@ function Circles:init()
 
     inner_circle = {x = screen_centre[1], y = screen_centre[2], radius = 200}
 
-    local handle_one = handles.CircleHandle:new("circle_centre_handle",100,100, 7.5)
-    local handle_radius_control = handles.CircleHandle:new("circle_centre_handle",300,300, 7.5)
-    -- table.insert( widgets, handle_one )
-    -- print("-")
+    local handle_one = handles.CircleHandle:new("circle_centre_handle",250,screen_centre[2], 7.5)
+    handle_one.label = "center"
     widgets["circle_centre_control"] = handle_one
+
+    local handle_radius_control = handles.CircleHandle:new("circle_radius_handle",300,300, 7.5)
+    handle_radius_control.label = "r"
+    handle_radius_control.label_offset = {x=-12, y=0.0}
     widgets["circle_radius_control"] = handle_radius_control
+    
+    local handle_outer_circle_diameter = handles.CircleHandle:new("outer_circle_diameter", 300, 300, 7.5)
+    handle_outer_circle_diameter.label = "d"
+    handle_outer_circle_diameter.label_offset = {x=12, y=0.0}
+    widgets["outer_circle_diameter_control"] = handle_outer_circle_diameter
+
 end
 
 
@@ -77,12 +86,20 @@ function Circles:update(dt)
 
     end
     widgets["circle_radius_control"].y = widgets["circle_centre_control"].y
+    widgets["outer_circle_diameter_control"].y = widgets["circle_centre_control"].y
     if not widgets["circle_radius_control"].dragging then
         widgets["circle_radius_control"].x = widgets["circle_centre_control"].x + interactive_circle_radius
     else
       interactive_circle_radius = math.abs( widgets["circle_radius_control"].x - widgets["circle_centre_control"].x )
     end
+    if not widgets["outer_circle_diameter_control"].dragging then
+        widgets["outer_circle_diameter_control"].x = widgets["circle_radius_control"].x + outer_circle_diameter
+    else
+        outer_circle_diameter = math.abs( widgets["outer_circle_diameter_control"].x - widgets["circle_radius_control"].x )
+    end
 end
+
+
 
 local little_circle_margin = 8
 
@@ -92,13 +109,7 @@ function Circles:draw(dt)
     local new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1, 1.0 ), 0.85, 0.05)
     love.graphics.clear( new_r, new_g, new_b )
 
-    -- interactive cricle
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.circle("line", widgets["circle_centre_control"].x, widgets["circle_centre_control"].y, interactive_circle_radius)
-
-    draw.dashLine( {x=widgets["circle_centre_control"].x + widgets["circle_centre_control"].radius, y=widgets["circle_centre_control"].y},
-                    {x=widgets["circle_radius_control"].x - widgets["circle_radius_control"].radius , y=widgets["circle_radius_control"].y}, 5, 5 )
-
+    
     -- animated circles around circles
     local fx = font_medium:getWidth("CIRCLES")
     local fy = font_medium:getHeight()
@@ -133,7 +144,7 @@ function Circles:draw(dt)
         average_radius = average_radius + v.radius
     end
     average_radius = average_radius / #outer_circles
-
+    
     
     new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 + 0.3, 1.0 ), 0.85, 0.3)
     love.graphics.setColor( new_r, new_g, new_b )
@@ -145,8 +156,8 @@ function Circles:draw(dt)
     
     love.graphics.setColor( new_r, new_g, new_b, 0.25 )
     for k = 2,15 do
-        draw.dashLine( {x=outer_circles[k-1].x, y=outer_circles[k-1].y}, {x=outer_circles[k].x, y=outer_circles[k].y}, 5, 5 )
-        draw.dashLine( {x=inner_circle.x, y=inner_circle.y}, {x=outer_circles[k].x, y=outer_circles[k].y}, 5, 5 )
+        draw.dashLine( {x=outer_circles[k-1].x, y=outer_circles[k-1].y}, {x=outer_circles[k].x, y=outer_circles[k].y}, 5, 5, true )
+        draw.dashLine( {x=inner_circle.x, y=inner_circle.y}, {x=outer_circles[k].x, y=outer_circles[k].y}, 5, 5, true )
     end
 
     new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1 - 0.15, 1.0 ), 0.85, 0.3)
@@ -157,11 +168,73 @@ function Circles:draw(dt)
     love.graphics.setColor( new_r, new_g, new_b )
     love.graphics.setFont(font_medium_small)
     love.graphics.print(string.format("inner circle radius: %s\naverage radius: %0.2f", inner_circle.radius, average_radius), 20, 50)
+    
+    --------------------------------------------------------------------------------------
+    -- interactive cricle
+    love.graphics.setColor(1,1,1,1)
+
+    local st = geometry.subtending_tangents_angle( widgets["circle_centre_control"].x,
+                                                    widgets["circle_centre_control"].y,
+                                                    widgets["circle_centre_control"].x + interactive_circle_radius,
+                                                    widgets["circle_centre_control"].y,
+                                                    widgets["circle_radius_control"].radius
+                                                    )
+    
+    st = st/2.0
+    love.graphics.arc("line", "open",
+            widgets["circle_centre_control"].x,
+            widgets["circle_centre_control"].y,
+            interactive_circle_radius,
+            (2*math.pi) - st, st)
+    
+            
+    local oc_r = (widgets["outer_circle_diameter_control"].x - widgets["circle_radius_control"].x) / 2.0
+    local oc_x = widgets["circle_radius_control"].x + oc_r
+    local st2 = geometry.subtending_tangents_angle( widgets["outer_circle_diameter_control"].x,
+                                                    widgets["outer_circle_diameter_control"].y,
+                                                    oc_x,
+                                                    widgets["outer_circle_diameter_control"].y,
+                                                    widgets["outer_circle_diameter_control"].radius
+                                                )
+    local st2 = st2/2.0
+                                                    
+    --                                            
+    love.graphics.arc("line", "open",
+                        oc_x,
+                        widgets["outer_circle_diameter_control"].y,
+                        oc_r,
+                        math.pi-st2, st2, 32
+                    )
+
+    love.graphics.arc("line", "open",
+                    oc_x,
+                    widgets["outer_circle_diameter_control"].y,
+                    oc_r,
+                    (2*math.pi)-st2, math.pi +st2, 32
+                )
+
+    
+
+    love.graphics.setColor(1,1,1,0.5)
+    
+    love.graphics.points( oc_x, widgets["outer_circle_diameter_control"].y )
+    
+    draw.dashLine( {x=widgets["circle_centre_control"].x + widgets["circle_centre_control"].radius, y=widgets["circle_centre_control"].y},
+                    {x=widgets["circle_radius_control"].x - widgets["circle_radius_control"].radius , y=widgets["circle_radius_control"].y},
+                    5, 5, false )
+    love.graphics.setFont( font_small )
+    local fw = font_small:getWidth( tostring( interactive_circle_radius ) )
+    local fh = font_small:getHeight()
+    love.graphics.print( tostring(interactive_circle_radius),
+                    math.floor( math.abs(widgets["circle_radius_control"].x - widgets["circle_centre_control"].x)/2.0 + widgets["circle_centre_control"].x - (fw/2.0) ),
+                    widgets["circle_radius_control"].y + 2  )
+    
 
     for k,v in pairs(widgets) do
         v:draw()
     end
-
+    --------------------------------------------------------------------------------------
+    
 end
 
 

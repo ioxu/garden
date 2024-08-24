@@ -42,5 +42,20 @@ function Geometry.findThirdTriangleVertex( Ax, Ay, Bx, By, AB_length, AC_length,
     return x,y
 end
 
+--- calculates the angle between tangents drawn from a given external point to a circle
+--- @param x1 number circle point x
+--- @param y1 number circle point y
+--- @param x2 number external point x
+--- @param y2 number external point y
+--- @param radius number circle's radius
+--- @return number sigma the angle between the tangents in radians
+function Geometry.subtending_tangents_angle( x1, y1, x2, y2, radius)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    local distance = math.sqrt(dx * dx + dy * dy)
+    -- assert( distance > radius, string.format("distance between external point and circle center needs to be greater that the circle's radius (distance is %s, radius is %s)", distance, radius) )
+    return 2.0 * math.asin(radius / distance)
+end
+
 
 return Geometry

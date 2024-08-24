@@ -4,6 +4,8 @@ Handles = {}
 -- https://stackoverflow.com/questions/65961478/how-to-mimic-simple-inheritance-with-base-and-child-class-constructors-in-lua-t
 
 
+local font_small = love.graphics.newFont(10)
+
 Handles.Handle = {}
 function Handles.Handle:new(name)
     Handles.Handle.__index = Handles.Handle
@@ -12,6 +14,9 @@ function Handles.Handle:new(name)
     self.highlighted = false
     self.selected = false
     self.dragging = false
+    
+    self.label = nil
+    self.label_offset = {x=0.0, y=0.0}
     return self
 end
 
@@ -52,7 +57,7 @@ Handles.CircleHandle = {}
 function Handles.CircleHandle:new(name, x, y, radius)
     Handles.CircleHandle.__index =  Handles.CircleHandle
     setmetatable( Handles.CircleHandle, {__index = Handles.Handle} )
-    local self = Handles.Handle:new(name, radius)
+    local self = Handles.Handle:new(name)--, radius)
     setmetatable(self, Handles.CircleHandle)
     self.x = x
     self.y = y
@@ -62,18 +67,29 @@ end
 
 
 function Handles.CircleHandle:draw()
+    love.graphics.setColor(1,1,1,1)
     love.graphics.setLineWidth(1)
+    
     if self.highlighted then
-        love.graphics.setColor(0.9, 0.75, 0.2, 0.85)
+        -- love.graphics.setColor(0.9, 0.75, 0.2, 0.85)
+        love.graphics.setLineWidth(3.5)
         if self.selected then
-            love.graphics.setColor(0.9, 0.9, 0.9, 0.95)
+            -- love.graphics.setColor(0.9, 0.9, 0.9, 0.95)
+            love.graphics.setLineWidth(6)
         else
-            love.graphics.setColor(0.9, 0.75, 0.2, 0.85)
+            -- love.graphics.setColor(0.9, 0.75, 0.2, 0.85)
         end
     else
-        love.graphics.setColor(0.9, 0.75, 0.2, 0.35)
+        -- love.graphics.setColor(0.9, 0.75, 0.2, 0.35)
     end
     love.graphics.circle( "line", self.x, self.y, self.radius )
+    if self.label then
+        love.graphics.setFont(font_small)
+        love.graphics.setColor(1,1,1,0.5)
+        local fw = font_small:getWidth(tostring(self.label))
+        local fh = font_small:getHeight()
+        love.graphics.print(self.label, self.x - (fw/2) + self.label_offset.x, self.y + fh - 2 + self.label_offset.y )
+    end
 end
 
 

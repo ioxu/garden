@@ -42,6 +42,7 @@ function Geometry.findThirdTriangleVertex( Ax, Ay, Bx, By, AB_length, AC_length,
     return x,y
 end
 
+
 --- calculates the angle between tangents drawn from a given external point to a circle
 --- @param x1 number circle point x
 --- @param y1 number circle point y
@@ -55,6 +56,27 @@ function Geometry.subtending_tangents_angle( x1, y1, x2, y2, radius)
     local distance = math.sqrt(dx * dx + dy * dy)
     -- assert( distance > radius, string.format("distance between external point and circle center needs to be greater that the circle's radius (distance is %s, radius is %s)", distance, radius) )
     return 2.0 * math.asin(radius / distance)
+end
+
+------------------------------------------------------------------------------------------
+-- 
+--- @param cx number the center circle's x coord
+--- @param cy number the center circle's y coord
+--- @param radius number the center circle's radius
+--- @param new_circles_radius_strategy function generator function for the new circles' radii
+--- @return table circles a table of the cenerated circles of form {x=x_coord, y=y_coord, radius=radius}
+function Geometry.circles_surrounding_circle( cx, cy, radius, new_circles_radius_strategy)
+    local full = false
+    local circles = {}
+    local i = 0
+
+    while not full do
+        local rr = new_circles_radius_strategy( cx, cy, radius)
+        -- print("[circles_surrounding_circle.new_circles_radius_strategy]", rr)
+        i = i+1
+        if i == 5 then full = true end
+    end
+    return circles
 end
 
 

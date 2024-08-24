@@ -4,6 +4,7 @@ local vector = require"lib.vector"
 local draw = require"lib.draw"
 local geometry = require"lib.geometry"
 local handles = require"lib.handles"
+local signal = require"lib.signal"
 
 local Circles = {}
 Circles.scene_name = "circles_around_circles"
@@ -25,10 +26,54 @@ local is_paused = false
 local screen_centre = {love.graphics.getWidth()/2, love.graphics.getHeight()/2}
 
 
+------------------------------------------------------------------------------------------
+-- INTERACTIVE CIRCLES
 -- hold handles
 local widgets = {}
 local interactive_circle_radius = 75
 local outer_circle_diameter = 25
+------------------------------------------------------------------------------------------
+-- Strategy Pattern:
+-- create a closer to pass to geometry.circles_surrounding_circle's new_circles_radius_strategy
+-- argument
+
+-- define the client function
+local function random_radius_strategy( rmin, rmax )
+    return function(cx, cy, radius)
+        rr = shaping.remap(rng:random(), 0.0, 1.0, 15.0, 55.0)
+        -- print(string.format("[Random_Radius_Strategy] rmin: %s rmax: %s, %s", rmin, rmax, rr))
+        return rr
+    end
+end
+
+local function constant_radius_strategy( )
+    return function(cx, cy, radius)
+        return 25.25
+    end
+end
+
+-- create the parameterised instance of the closure
+local rstrat = constant_radius_strategy()--random_radius_strategy(15.0, 55.0)
+
+
+-- pass to the generator
+-- generated circles
+local circs = {}
+
+function regenerate_circs()
+
+    return geometry.circles_surrounding_circle(
+        widgets["circle_centre_control"].x,
+        widgets["circle_centre_control"].y,
+        widgets["circle_centre_control"].radius,
+                                    rstrat
+                                )
+end
+
+local radius_controls_signals = signal:new()
+
+
+------------------------------------------------------------------------------------------
 
 function Circles:init()
     print("[circles] init")
@@ -50,6 +95,8 @@ function Circles:init()
     handle_outer_circle_diameter.label_offset = {x=12, y=0.0}
     widgets["outer_circle_diameter_control"] = handle_outer_circle_diameter
 
+    radius_controls_signals:register( "updated", regenerate_circs )
+    circs = regenerate_circs()
 end
 
 
@@ -85,16 +132,25 @@ function Circles:update(dt)
         end
 
     end
+
     widgets["circle_radius_control"].y = widgets["circle_centre_control"].y
     widgets["outer_circle_diameter_control"].y = widgets["circle_centre_control"].y
+    
+    if widgets["circle_centre_control"].dragging then
+        radius_controls_signals:emit("updated")
+    end
+
     if not widgets["circle_radius_control"].dragging then
         widgets["circle_radius_control"].x = widgets["circle_centre_control"].x + interactive_circle_radius
     else
-      interactive_circle_radius = math.abs( widgets["circle_radius_control"].x - widgets["circle_centre_control"].x )
+        radius_controls_signals:emit("updated")
+        interactive_circle_radius = math.abs( widgets["circle_radius_control"].x - widgets["circle_centre_control"].x )
     end
+    
     if not widgets["outer_circle_diameter_control"].dragging then
         widgets["outer_circle_diameter_control"].x = widgets["circle_radius_control"].x + outer_circle_diameter
     else
+        radius_controls_signals:emit("updated")
         outer_circle_diameter = math.abs( widgets["outer_circle_diameter_control"].x - widgets["circle_radius_control"].x )
     end
 end
@@ -104,6 +160,10 @@ end
 local little_circle_margin = 8
 
 
+
+
+
+------------------------------------------------------------------------------------------
 function Circles:draw(dt)
 
     local new_r, new_g, new_b = color.hslToRgb(math.fmod( global_time * 0.1, 1.0 ), 0.85, 0.05)
@@ -233,9 +293,13 @@ function Circles:draw(dt)
     for k,v in pairs(widgets) do
         v:draw()
     end
+
+
     --------------------------------------------------------------------------------------
-    
 end
+
+
+
 
 
 function Circles:mousepressed( x, y, button, istouch, presses )

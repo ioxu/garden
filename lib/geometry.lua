@@ -1,4 +1,7 @@
+local vector = require"lib.vector"
 Geometry = {}
+
+math.tau = math.pi * 2.0
 
 --- Calculates the third vertex of a triangle if the position of two vertices and all three side-lengths are known.
 --- @param Ax number x coord of vertex A
@@ -59,23 +62,98 @@ function Geometry.subtending_tangents_angle( x1, y1, x2, y2, radius)
 end
 
 ------------------------------------------------------------------------------------------
--- 
+--- @class Circle
+--- @field x number x coord of new circle
+--- @field y number y coord of new circle
+--- @field radius number radius of new circle
+
+--- Creates a table of Circles surrounding a centre circle
 --- @param cx number the center circle's x coord
 --- @param cy number the center circle's y coord
 --- @param radius number the center circle's radius
 --- @param new_circles_radius_strategy function generator function for the new circles' radii
---- @return table circles a table of the cenerated circles of form {x=x_coord, y=y_coord, radius=radius}
+--- @return table<index, Circle> #A table of the cenerated Circle objects {{x : number, y : number, radius : number}, ...}
 function Geometry.circles_surrounding_circle( cx, cy, radius, new_circles_radius_strategy)
     local full = false
+    local fullness = 0.0
     local circles = {}
-    local i = 0
 
-    while not full do
-        local rr = new_circles_radius_strategy( cx, cy, radius)
-        -- print("[circles_surrounding_circle.new_circles_radius_strategy]", rr)
+    local i = 1
+
+    local new_pos_x, new_pos_y
+
+    -- the first subtended angle of the first outer circle (/-2 to get the first half-cirle filling the outer)
+    -- once a circle 
+    local begin_angle = 0.0
+    local this_circles_subtended_angle = -1.0
+    local this_centre_dir_x, this_centre_dir_y
+    local new_centre_angle
+    local this_centre_angle = 0.0
+    local new_subtended_angle
+    -- while not full do
+    -- while (fullness < math.tau) do
+    
+    print("compare", (this_circles_subtended_angle < begin_angle))
+    -- while (this_circles_subtended_angle < begin_angle) do
+    while (this_circles_subtended_angle < math.tau + begin_angle  ) do
+        -- local new_radius = new_circles_radius_strategy( cx, cy, radius)
+        local new_radius = new_circles_radius_strategy( cx, cy, radius)
+        if i == 1 then
+            -- FIRST CIRCLE
+            new_pos_x = cx + radius + new_radius
+            new_pos_y = cy
+            circles[1] = { x= new_pos_x, y = new_pos_y, radius = new_radius}
+            -- fullness = fullness + Geometry.subtending_tangents_angle( cx, cy, new_pos_x, new_pos_y, new_radius )
+            -- begin_angle = math.tau - (0.5 * Geometry.subtending_tangents_angle( cx, cy, new_pos_x, new_pos_y, new_radius ))
+            begin_angle = -0.5 * Geometry.subtending_tangents_angle( cx, cy, new_pos_x, new_pos_y, new_radius )
+            print("------------------------------------------------------")
+            print("begin_angle", begin_angle)
+        else
+            new_pos_x, new_pos_y = Geometry.findThirdTriangleVertex( cx, cy,
+            circles[i-1].x,
+            circles[i-1].y,
+            radius + circles[i-1].radius,
+            radius + new_radius,
+            new_radius + circles[i-1].radius,
+            "right"
+            )
+        
+            -- fullness = fullness + Geometry.subtending_tangents_angle( cx, cy, new_pos_x, new_pos_y, new_radius )
+            this_centre_dir_x, this_centre_dir_y = vector.normalise( new_pos_x - cx, new_pos_y - cy )
+            
+            
+            new_centre_angle = math.atan2( this_centre_dir_y, this_centre_dir_x  )
+            new_centre_angle = ((new_centre_angle + math.pi)/(2*math.pi) + 0.5)%1
+            new_centre_angle = new_centre_angle * (2*math.pi)
+
+            -- accumulation check
+            if new_centre_angle > this_centre_angle then
+                this_centre_angle = new_centre_angle
+            else
+                this_centre_angle = new_centre_angle + math.tau
+            end
+            
+            print("  this_centre_angle", this_centre_angle, string.format("(%0.2f)", this_centre_angle/math.tau) )
+            new_subtended_angle = this_centre_angle + Geometry.subtending_tangents_angle( cx, cy, new_pos_x, new_pos_y, new_radius )/2.0
+            print("  new_subtended_angle", new_subtended_angle)
+            if new_subtended_angle > this_circles_subtended_angle then
+                this_circles_subtended_angle =  new_subtended_angle
+            end
+            print("this_circles_subtended_angle", this_circles_subtended_angle)
+            if this_circles_subtended_angle < math.tau + begin_angle then
+                circles[i] =  { x= new_pos_x, y = new_pos_y, radius = new_radius }
+            end
+            -- end
+            print("compare", (this_circles_subtended_angle < math.tau))
+        end
+
         i = i+1
-        if i == 5 then full = true end
+        -- if i == 10 then
+        --     print("---- break")
+        --     break
+        -- end
     end
+
     return circles
 end
 

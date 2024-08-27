@@ -28,5 +28,14 @@ function Vector.distance(x1, y1, x2, y2)
 end
 
 
+function Vector.normalise(x1, y1)
+	local l = Vector.distance( 0.0, 0.0, x1, y1 )
+	if l > 0 then
+		return x1 / l, y1 / l
+    else
+        return nil
+    end
+end
+
 
 return Vector

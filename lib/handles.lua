@@ -1,5 +1,6 @@
 local vector=require"lib.vector"
 local signal=require"lib.signal"
+local geometry=require"lib.geometry"
 Handles = {}
 
 -- https://stackoverflow.com/questions/65961478/how-to-mimic-simple-inheritance-with-base-and-child-class-constructors-in-lua-t
@@ -86,8 +87,8 @@ function Handles.CircleHandle:new(name, x, y, radius)
     setmetatable( Handles.CircleHandle, {__index = Handles.Handle} )
     local self = Handles.Handle:new(name)--, radius)
     setmetatable(self, Handles.CircleHandle)
-    self.x = x
-    self.y = y
+    self.x = x or 0.0
+    self.y = y or 0.0
     self.radius = radius or 5
     return self
 end
@@ -114,7 +115,7 @@ function Handles.CircleHandle:draw()
     else
         -- love.graphics.setColor(0.9, 0.75, 0.2, 0.35)
     end
-    love.graphics.circle( "line", self.x, self.y, self.radius )
+    love.graphics.circle( "line", self.x, self.y, self.radius, 16 )
     if self.label then
         love.graphics.setFont(font_small)
         love.graphics.setColor(1,1,1,0.5)
@@ -123,6 +124,101 @@ function Handles.CircleHandle:draw()
         love.graphics.print(self.label, self.x - (fw/2) + self.label_offset.x, self.y + fh - 2 + self.label_offset.y )
     end
 end
+
+------------------------------------------------------------------------------------------
+-- controls
+
+Handles.SliderHandle = {}
+--- Makes a slider handle that is constrained to a line between two points.
+--- @param factor number the normalised position of the slider on the line (0.0 .. 1.0)
+function Handles.SliderHandle:new( name, x1, y1, x2, y2, radius, factor )
+    Handles.SliderHandle.__index = Handles.SliderHandle
+    setmetatable( Handles.SliderHandle, {__index = Handles.CircleHandle} )
+    local self = Handles.CircleHandle:new(name)
+    setmetatable( self, Handles.SliderHandle )
+    self.x1 = x1 or 0.0
+    self.y1 = y1 or 0.0
+    self.x2 = x2 or 1.0
+    self.y2 = y2 or 1.0
+    self.radius = radius or 5.0
+    self.factor = factor or 0.0
+    
+    -- config options
+    self.realtime_factor_signal = true -- if false, will only emit "factor_changed" when mouse is released
+    self._defer_emit_factor_signal = false -- buffer
+
+    return self
+end
+
+
+function Handles.SliderHandle:update_line()
+    if not self.dragging then
+        self.x = self.x1 + (self.x2 - self.x1) * self.factor
+        self.y = self.y1 + (self.y2 - self.y1) * self.factor
+    end
+end
+
+
+function Handles.SliderHandle:mousemoved( x, y, dx, dy,...)
+    Handles.CircleHandle.mousemoved(self, x, y, dx, dy)
+    if self.dragging then
+        local px, py, factor = geometry.closest_point_on_line( self.x1, self.y1, self.x2, self.y2, self.x, self.y )
+        self.factor = factor
+        self.x, self.y = px, py
+        if self.realtime_factor_signal then
+            self.signals:emit("factor_changed", self.factor, self)
+        else
+            self._defer_emit_factor_signal = true
+        end
+    end
+end
+
+
+function Handles.SliderHandle:mousereleased( x, y, button, istouch, presses )
+    Handles.CircleHandle.mousereleased( self, x, y, button, istouch, presses )
+    if self._defer_emit_factor_signal then
+        self.signals:emit("factor_changed", self.factor, self)
+    end
+end
+
+
+function Handles.SliderHandle:draw()
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.setLineWidth(2)
+    local localx, localy = self.x2 - self.x1, self.y2 - self.y1
+    local extrapx, extrapy = vector.normalise(localx, localy)
+    local orthx, orthy = extrapy * 3, extrapx * 3
+    
+    if self.x2 < self.x1 then extrapx = extrapx * - 1 end
+    if self.y2 > self.y1 then extrapy = extrapy * - 1 end
+    
+    local sx = self.x1 - extrapx * self.radius
+    local sy = self.y1 - extrapy * self.radius
+    local ex = self.x2 + extrapx * self.radius
+    local ey = self.y2 + extrapy * self.radius
+    
+    -- love.graphics.line( sx, sy, ex, ey )
+    -- first part of the slider line
+    love.graphics.line( sx, sy,
+        (self.x1 + localx * self.factor) - extrapx * self.radius,
+        (self.y1 + localy * self.factor) - extrapy * self.radius
+    )
+    love.graphics.line( sx - 1 - orthx, sy + 1 - orthx, sx -1 + orthx, sy +1  + orthx  )
+
+    -- second part of the slider line
+    love.graphics.setLineWidth(1)
+    love.graphics.setColor(1,1,1,0.15)
+    love.graphics.line( ex, ey,
+        (self.x1 + localx * self.factor) + extrapx * self.radius,
+        (self.y1 + localy * self.factor) + extrapy * self.radius
+    )
+    
+
+    love.graphics.line( ex + 1 - orthx, ey - 1 - orthx, ex +1 + orthx, ey -1  + orthx  )
+
+    Handles.CircleHandle.draw( self )
+end
+
 
 
 return Handles

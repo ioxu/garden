@@ -81,32 +81,36 @@ function regenerate_circs()
 end
 
 local radius_controls_signals = signal:new()
+local slider_controls_signals = signal:new()
 
 
+function on_slider_factor_changed(new_value, slider)
+    print(string.format("[on_slider_factor_changed] %0.2f (%s)",new_value, slider.name ))
+end
 ------------------------------------------------------------------------------------------
 -- handle events
-function on_handle_highlighted(handle)
-    print(string.format("'%s' highlighted", handle.name))
-end
+-- function on_handle_highlighted(handle)
+--     print(string.format("'%s' highlighted", handle.name))
+-- end
 
 
-function on_handle_unhighlighted(handle)
-    print(string.format("'%s' unhighlighted", handle.name))
-end
+-- function on_handle_unhighlighted(handle)
+--     print(string.format("'%s' unhighlighted", handle.name))
+-- end
 
 
-function on_handle_pressed(handle)
-    print(string.format("'%s' pressed", handle.name))
-end
+-- function on_handle_pressed(handle)
+--     print(string.format("'%s' pressed", handle.name))
+-- end
 
 
-function on_handle_released(handle)
-    print(string.format("'%s' released", handle.name))
-end
+-- function on_handle_released(handle)
+--     print(string.format("'%s' released", handle.name))
+-- end
 
-function on_handle_dragged(handle, dx, dy)
-    print(string.format("'%s' dragged. dx: %i, dy: %i", handle.name, dx, dy))
-end
+-- function on_handle_dragged(handle, dx, dy)
+--     print(string.format("'%s' dragged. dx: %i, dy: %i", handle.name, dx, dy))
+-- end
 
 
 ------------------------------------------------------------------------------------------
@@ -139,6 +143,17 @@ function Circles:init()
 
     radius_controls_signals:register( "updated", regenerate_circs )
     regenerate_circs()
+
+    local test_slider = handles.SliderHandle:new("test_slider",
+        handle_outer_circle_diameter.x + 35,
+        handle_outer_circle_diameter.y - 35, 
+        handle_outer_circle_diameter.x + 35 + 75,
+        handle_outer_circle_diameter.y - 35 - 75,
+        4, 0.25
+    )
+    test_slider.realtime_factor_signal = false
+    test_slider.signals:register("factor_changed", on_slider_factor_changed)
+    widgets["test_slider"] = test_slider
 end
 
 
@@ -199,6 +214,26 @@ function Circles:update(dt)
         -- rstrat = geometry.csc_random_radius_strategy((outer_circle_diameter/2.0)*0.1, outer_circle_diameter/2.0)--, base_rng_seed)
         -- rstrat = constant_radius_strategy( outer_circle_diameter/2.0 )
     end
+
+
+    -------------------------------------------------------
+    -- this should really be happening in an event on "line_updated" or something
+    -- instead of every tick
+    -------------------------------------------------------
+    -------------------------------------------------------
+    local ocdc = widgets["outer_circle_diameter_control"] 
+    local ts = widgets["test_slider"]
+    ts.x1 = ocdc.x + 35
+    ts.y1 = ocdc.y - 35
+    ts.x2 = ocdc.x + 35 + 75
+    ts.y2 = ocdc.y - 35 - 75 --* math.sin( global_time * 0.6)
+    -- ts.x1 = ocdc.x + 35
+    -- ts.y1 = ocdc.y + 20
+    -- ts.x2 = ocdc.x + 35 + 100
+    -- ts.y2 = ocdc.y + 20 + 35
+
+    ts:update_line()
+    -------------------------------------------------------
 end
 
 

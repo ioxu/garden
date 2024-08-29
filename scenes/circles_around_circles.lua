@@ -63,8 +63,8 @@ local function constant_radius_strategy( constant_radius )
 end
 
 -- create the parameterised instance of the closure
-local rstrat = constant_radius_strategy( outer_circle_diameter )
--- local rstrat = random_radius_strategy(15.0, 55.0)
+-- local rstrat = constant_radius_strategy( outer_circle_diameter )
+local rstrat = random_radius_strategy(15.0, 55.0)
 -- local rstrat = geometry.csc_random_radius_strategy(15.0, 55.0)
 
 -- generated circles
@@ -195,9 +195,9 @@ function Circles:update(dt)
     else
         radius_controls_signals:emit("updated")
         outer_circle_diameter = math.abs( widgets["outer_circle_diameter_control"].x - widgets["circle_radius_control"].x )
-        -- rstrat = random_radius_strategy((outer_circle_diameter/2.0)*0.1, outer_circle_diameter/2.0)
+        rstrat = random_radius_strategy((outer_circle_diameter/2.0)*0.1, outer_circle_diameter/2.0)
         -- rstrat = geometry.csc_random_radius_strategy((outer_circle_diameter/2.0)*0.1, outer_circle_diameter/2.0)--, base_rng_seed)
-        rstrat = constant_radius_strategy( outer_circle_diameter/2.0 )
+        -- rstrat = constant_radius_strategy( outer_circle_diameter/2.0 )
     end
 end
 
@@ -356,15 +356,15 @@ function Circles:draw(dt)
         -- love.graphics.line( wcc_x, wcc_y, wcc_x+st_dir_x, wcc_y+st_dir_y )
         
         -- draw the GAP for the final MISSING circle
-        if k == 1 then
-            -- the first circle
-            tt = oc_st_angle * -1
-        elseif k == #circs then 
-            -- the last circle
-            ll = math.atan2( st_dir_y, st_dir_x )
-            love.graphics.setColor(1,1,1,0.05)
-            love.graphics.arc("fill", "pie", wcc_x, wcc_y, oc_rr, tt, ll )
-        end
+        -- if k == 1 then
+        --     -- the first circle
+        --     tt = oc_st_angle * -1
+        -- elseif k == #circs then 
+        --     -- the last circle
+        --     ll = math.atan2( st_dir_y, st_dir_x )
+        --     love.graphics.setColor(1,1,1,0.05)
+        --     love.graphics.arc("fill", "pie", wcc_x, wcc_y, oc_rr, tt, ll )
+        -- end
     end
     
     -- draw the rest of the ornaments

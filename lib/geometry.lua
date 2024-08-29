@@ -121,6 +121,7 @@ function Geometry.circles_surrounding_circle( cx, cy, radius, new_circles_radius
     local new_centre_angle -- temp new angle from innner circle centre to the new outer circle centre
     local this_centre_angle = 0.0 -- final angle from circle centre to the new outer circle centre
     local new_subtended_angle -- current 'leading' subtended tangent for latest outer circle
+    local new_trailing_subtended_angle -- current 'leading' subtended tangent for latest outer circle
        
     -- if the latest outer circle's edge doesn't exceed the first outer circle's trailing edge
     while (this_circles_subtended_angle < math.tau + begin_angle  ) do
@@ -161,7 +162,9 @@ function Geometry.circles_surrounding_circle( cx, cy, radius, new_circles_radius
             end
             
             -- find angle of new leading tangent
-            new_subtended_angle = this_centre_angle + Geometry.subtending_tangents_angle( cx, cy, new_pos_x, new_pos_y, new_radius )/2.0
+            local st = Geometry.subtending_tangents_angle( cx, cy, new_pos_x, new_pos_y, new_radius )/2.0
+            new_subtended_angle = this_centre_angle + st
+            new_trailing_subtended_angle = this_centre_angle - st
             -- sometimes if the new circle is smaller than the previous circle, the tangent is at less of an angle
             if new_subtended_angle > this_circles_subtended_angle then
                 this_circles_subtended_angle =  new_subtended_angle
@@ -172,7 +175,16 @@ function Geometry.circles_surrounding_circle( cx, cy, radius, new_circles_radius
                 circles[i] =  { x= new_pos_x, y = new_pos_y, radius = new_radius }
             else
                 --draw filler circle
-
+                -- radius is found by rule of sines (SOH) between centre-distance between inner circle and outer circle (hypotenuse),
+                -- angle at inner circle centre (half subtending angle, found by the gap)
+                -- and the unsolved outer circle radius (opposite)
+                -- the position is solved once the radius is found.
+                local theta = (math.tau + begin_angle) - new_trailing_subtended_angle
+                theta = theta/2.0
+                local r = (radius * math.sin( theta )) / ( 1 -  math.sin( theta ) )
+                local new_x = cx + (radius + r)*math.cos( theta - begin_angle )
+                local new_y = cy - (radius + r)*math.sin( theta - begin_angle )
+                circles[i] = {x = new_x, y=new_y, radius = r}
             end
         end
         i = i+1

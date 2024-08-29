@@ -7,6 +7,7 @@ Handles = {}
 
 local font_small = love.graphics.newFont(10)
 
+
 Handles.Handle = {}
 function Handles.Handle:new(name)
     Handles.Handle.__index = Handles.Handle
@@ -23,6 +24,16 @@ function Handles.Handle:new(name)
     return self
 end
 
+--- Abstract method to check if a point (usually the mouse cursor) is "inside" the control.  
+--- *Must be overridden in subclasses.*
+--- @abstract
+--- @param x number x-coordinate to check
+--- @param y number y-coordinate to check
+--- @return true|false inside
+function Handles.Handle:point_inside( x, y )
+    error("Handles.Handle:is_inside() absract; not implemented")
+end
+
 
 function Handles.Handle:mousemoved(x,y,dx,dy,...)
     -- print("Handles.Handle:mousemoved", x, y)
@@ -32,7 +43,8 @@ function Handles.Handle:mousemoved(x,y,dx,dy,...)
         self.x = self.x + dx
         self.y = self.y + dy
     else
-        if vector.distance( self.x, self.y, x, y ) < self.radius then
+        -- if vector.distance( self.x, self.y, x, y ) < self.radius then
+        if self:point_inside(x,y) then
             if not self.highlighted then
                 self.signals:emit("highlighted", self)
                 self.highlighted = true
@@ -67,6 +79,7 @@ function Handles.Handle:mousereleased( x, y, button, istouch, presses )
 end
 
 
+------------------------------------------------------------------------------------------
 Handles.CircleHandle = {}
 function Handles.CircleHandle:new(name, x, y, radius)
     Handles.CircleHandle.__index =  Handles.CircleHandle
@@ -77,6 +90,11 @@ function Handles.CircleHandle:new(name, x, y, radius)
     self.y = y
     self.radius = radius or 5
     return self
+end
+
+
+function Handles.CircleHandle:point_inside( x, y )
+    return (vector.distance( self.x, self.y, x, y ) < self.radius)
 end
 
 

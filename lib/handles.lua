@@ -1,4 +1,5 @@
 local vector=require"lib.vector"
+local signal=require"lib.signal"
 Handles = {}
 
 -- https://stackoverflow.com/questions/65961478/how-to-mimic-simple-inheritance-with-base-and-child-class-constructors-in-lua-t
@@ -17,6 +18,8 @@ function Handles.Handle:new(name)
     
     self.label = nil
     self.label_offset = {x=0.0, y=0.0}
+
+    self.signals = signal:new()
     return self
 end
 
@@ -25,12 +28,19 @@ function Handles.Handle:mousemoved(x,y,dx,dy,...)
     -- print("Handles.Handle:mousemoved", x, y)
     if self.selected and self.dragging then
         -- drag
+        self.signals:emit("dragged", self, dx, dy)
         self.x = self.x + dx
         self.y = self.y + dy
     else
         if vector.distance( self.x, self.y, x, y ) < self.radius then
-            self.highlighted = true
+            if not self.highlighted then
+                self.signals:emit("highlighted", self)
+                self.highlighted = true
+            end
         else
+            if self.highlighted then
+                self.signals:emit("unhighlighted", self)
+            end
             self.highlighted = false
         end
     end
@@ -39,6 +49,7 @@ end
 
 function Handles.Handle:mousepressed( x, y, button, istouch, presses )
     if self.highlighted then
+        self.signals:emit("pressed", self)
         self.selected = true
         self.dragging = true
     else
@@ -48,6 +59,9 @@ end
 
 
 function Handles.Handle:mousereleased( x, y, button, istouch, presses )
+    if self.selected then
+        self.signals:emit("released", self)
+    end
     self.selected = false
     self.dragging = false
 end

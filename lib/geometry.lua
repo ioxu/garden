@@ -170,6 +170,9 @@ function Geometry.circles_surrounding_circle( cx, cy, radius, new_circles_radius
             -- if this new leading tangent doesn't surpass the 1st circle's trailing tangent, add the circle
             if this_circles_subtended_angle < math.tau + begin_angle then
                 circles[i] =  { x= new_pos_x, y = new_pos_y, radius = new_radius }
+            else
+                --draw filler circle
+
             end
         end
         i = i+1

@@ -63,8 +63,8 @@ local function constant_radius_strategy( constant_radius )
 end
 
 -- create the parameterised instance of the closure
--- local rstrat = constant_radius_strategy()
-local rstrat = random_radius_strategy(15.0, 55.0)
+local rstrat = constant_radius_strategy( outer_circle_diameter )
+-- local rstrat = random_radius_strategy(15.0, 55.0)
 -- local rstrat = geometry.csc_random_radius_strategy(15.0, 55.0)
 
 -- generated circles
@@ -84,6 +84,32 @@ local radius_controls_signals = signal:new()
 
 
 ------------------------------------------------------------------------------------------
+-- handle events
+function on_handle_highlighted(handle)
+    print(string.format("'%s' highlighted", handle.name))
+end
+
+
+function on_handle_unhighlighted(handle)
+    print(string.format("'%s' unhighlighted", handle.name))
+end
+
+
+function on_handle_pressed(handle)
+    print(string.format("'%s' pressed", handle.name))
+end
+
+
+function on_handle_released(handle)
+    print(string.format("'%s' released", handle.name))
+end
+
+function on_handle_dragged(handle, dx, dy)
+    print(string.format("'%s' dragged. dx: %i, dy: %i", handle.name, dx, dy))
+end
+
+
+------------------------------------------------------------------------------------------
 
 function Circles:init()
     print("[circles] init")
@@ -93,7 +119,13 @@ function Circles:init()
 
     local handle_one = handles.CircleHandle:new("circle_centre_handle",300,screen_centre[2], 7.5)
     handle_one.label = "center"
+    handle_one.signals:register("highlighted", on_handle_highlighted)
+    handle_one.signals:register("unhighlighted", on_handle_unhighlighted)
+    handle_one.signals:register("pressed", on_handle_pressed)
+    handle_one.signals:register("released", on_handle_released)
+    handle_one.signals:register("dragged", on_handle_dragged)
     widgets["circle_centre_control"] = handle_one
+
 
     local handle_radius_control = handles.CircleHandle:new("circle_radius_handle",300+interactive_circle_radius,300, 7.5)
     handle_radius_control.label = "r"
@@ -163,9 +195,9 @@ function Circles:update(dt)
     else
         radius_controls_signals:emit("updated")
         outer_circle_diameter = math.abs( widgets["outer_circle_diameter_control"].x - widgets["circle_radius_control"].x )
-        rstrat = random_radius_strategy((outer_circle_diameter/2.0)*0.1, outer_circle_diameter/2.0)
+        -- rstrat = random_radius_strategy((outer_circle_diameter/2.0)*0.1, outer_circle_diameter/2.0)
         -- rstrat = geometry.csc_random_radius_strategy((outer_circle_diameter/2.0)*0.1, outer_circle_diameter/2.0)--, base_rng_seed)
-        -- rstrat = constant_radius_strategy( outer_circle_diameter/2.0 )
+        rstrat = constant_radius_strategy( outer_circle_diameter/2.0 )
     end
 end
 

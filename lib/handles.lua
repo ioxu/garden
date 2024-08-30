@@ -156,11 +156,11 @@ end
 -- controls
 
 --- @class Handles.SliderHandle : Handles.CircleHandle
---- @field public x1 number
---- @field public y1 number
---- @field public x2 number
---- @field public  y2 number
---- @field public factor number
+--- @field public x1 number x coord of the start of the line control
+--- @field public y1 number y coord of the start of the line control
+--- @field public x2 number x coord of the end of the line control
+--- @field public y2 number y coord of the end of the line control
+--- @field public factor number the normalised position of the slider on the line (0.0 .. 1.0)
 --- @field public realtime_factor_signal boolean if true, emit factor-changed signal every tick, otherwise only on mouse-released
 Handles.SliderHandle = {}
 

@@ -38,6 +38,7 @@ local do_animated_circles = false
 local widgets = {}
 local interactive_circle_radius = 200
 local outer_circle_diameter = 200
+local min_random_radius_factor = 0.2
 ------------------------------------------------------------------------------------------
 -- Strategy Pattern:
 -- create a closure to pass to geometry.circles_surrounding_circle's new_circles_radius_strategy
@@ -86,6 +87,10 @@ local radius_controls_signals = signal:new()
 
 function on_slider_factor_changed(new_value, slider)
     print(string.format("[on_slider_factor_changed] %0.2f (%s)",new_value, slider.name ))
+    min_random_radius_factor = new_value
+    slider.label = string.format("%0.2f",new_value)
+    rstrat = random_radius_strategy((outer_circle_diameter/2.0)*min_random_radius_factor, outer_circle_diameter/2.0)
+    radius_controls_signals:emit("updated")
 end
 ------------------------------------------------------------------------------------------
 -- handle events
@@ -149,8 +154,11 @@ function Circles:init()
         handle_outer_circle_diameter.y - 35, 
         handle_outer_circle_diameter.x + 35 + 75,
         handle_outer_circle_diameter.y - 35 - 75,
-        4, 0.25
+        4,
+        min_random_radius_factor
     )
+    test_slider.label = ""
+    test_slider.label_offset = {x=0, y=-30.0}
     test_slider.realtime_factor_signal = true
     test_slider.signals:register("factor_changed", on_slider_factor_changed)
     widgets["test_slider"] = test_slider
@@ -210,7 +218,7 @@ function Circles:update(dt)
     else
         radius_controls_signals:emit("updated")
         outer_circle_diameter = math.abs( widgets["outer_circle_diameter_control"].x - widgets["circle_radius_control"].x )
-        rstrat = random_radius_strategy((outer_circle_diameter/2.0)*0.1, outer_circle_diameter/2.0)
+        rstrat = random_radius_strategy((outer_circle_diameter/2.0)*min_random_radius_factor, outer_circle_diameter/2.0)
         -- rstrat = geometry.csc_random_radius_strategy((outer_circle_diameter/2.0)*0.1, outer_circle_diameter/2.0)--, base_rng_seed)
         -- rstrat = constant_radius_strategy( outer_circle_diameter/2.0 )
     end
@@ -225,8 +233,8 @@ function Circles:update(dt)
     local ts = widgets["test_slider"]
     ts.x1 = ocdc.x + 35
     ts.y1 = ocdc.y - 35
-    ts.x2 = ocdc.x + 75 --+ 150 * math.sin( (global_time * 0.7532) * 0.6)
-    ts.y2 = ocdc.y - 35 - 75 --* math.sin( global_time * 1.0)
+    ts.x2 = ocdc.x + 150 --+ 150 * math.sin( (global_time * 0.7532) * 0.6)
+    ts.y2 = ocdc.y - 35 --- 75 --* math.sin( global_time * 1.0)
     ts:update_line()
     -------------------------------------------------------
 end

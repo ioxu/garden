@@ -225,8 +225,8 @@ function Circles:update(dt)
     local ts = widgets["test_slider"]
     ts.x1 = ocdc.x + 35
     ts.y1 = ocdc.y - 35
-    ts.x2 = ocdc.x + 35 + 75
-    ts.y2 = ocdc.y - 35 - 75 --* math.sin( global_time * 0.6)
+    ts.x2 = ocdc.x + 75 + 150 * math.sin( (global_time * 0.7532) * 0.6)
+    ts.y2 = ocdc.y - 35 - 75 * math.sin( global_time * 1.0)
     -- ts.x1 = ocdc.x + 35
     -- ts.y1 = ocdc.y + 20
     -- ts.x2 = ocdc.x + 35 + 100

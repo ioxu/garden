@@ -31,7 +31,6 @@ function Geometry.closest_point_on_line(x1, y1, x2, y2, px, py)
 end
 
 
-
 --- Calculates the third vertex of a triangle if the position of two vertices and all three side-lengths are known.
 --- @param Ax number x coord of vertex A
 --- @param Ay number y coord of vertex A

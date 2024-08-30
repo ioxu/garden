@@ -187,24 +187,21 @@ function Handles.SliderHandle:draw()
     love.graphics.setLineWidth(2)
     local localx, localy = self.x2 - self.x1, self.y2 - self.y1
     local extrapx, extrapy = vector.normalise(localx, localy)
-    local orthx, orthy = extrapy * 3, extrapx * 3
-    
-    if self.x2 < self.x1 then extrapx = extrapx * - 1 end
-    if self.y2 > self.y1 then extrapy = extrapy * - 1 end
+    local orthx, orthy = extrapy * 3, extrapx * - 3
     
     local sx = self.x1 - extrapx * self.radius
     local sy = self.y1 - extrapy * self.radius
     local ex = self.x2 + extrapx * self.radius
     local ey = self.y2 + extrapy * self.radius
     
-    -- love.graphics.line( sx, sy, ex, ey )
     -- first part of the slider line
     love.graphics.line( sx, sy,
         (self.x1 + localx * self.factor) - extrapx * self.radius,
         (self.y1 + localy * self.factor) - extrapy * self.radius
     )
-    love.graphics.line( sx - 1 - orthx, sy + 1 - orthx, sx -1 + orthx, sy +1  + orthx  )
-
+    -- end-bar
+    love.graphics.line( sx - orthx - extrapx, sy - orthy - extrapy, sx + orthx -extrapx, sy + orthy - extrapy )
+    
     -- second part of the slider line
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1,1,1,0.15)
@@ -212,9 +209,8 @@ function Handles.SliderHandle:draw()
         (self.x1 + localx * self.factor) + extrapx * self.radius,
         (self.y1 + localy * self.factor) + extrapy * self.radius
     )
-    
-
-    love.graphics.line( ex + 1 - orthx, ey - 1 - orthx, ex +1 + orthx, ey -1  + orthx  )
+    -- end-bar
+    love.graphics.line( ex - orthx + extrapx, ey - orthy + extrapy, ex + orthx + extrapx, ey + orthy + extrapy  )
 
     Handles.CircleHandle.draw( self )
 end

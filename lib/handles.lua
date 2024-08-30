@@ -8,16 +8,32 @@ Handles = {}
 
 local font_small = love.graphics.newFont(10)
 
-
+--- @class Handles.Handle
+--- @field name string
+--- @field x number x coord of Handle
+--- @field y number y coord of Handle
+--- @field highlighted boolean
+--- @field selected boolean
+--- @field dragging boolean
+--- @field label string
+--- @field label_offset table {x= x_offset, y= y_offset}
+--- @field signals table signals object
 Handles.Handle = {}
-function Handles.Handle:new(name)
+
+--- Base Handle type, mostly abstract
+--- @param x number x coord of the handle
+--- @param y number y coord of the handle
+--- @return Handles.Handle handle the new handle
+function Handles.Handle:new(name, x, y)
     Handles.Handle.__index = Handles.Handle
     local self = setmetatable({}, Handles.Handle)
     self.name = name or "handle"
+    self.x = x or 0.0
+    self.y = y or 0.0
     self.highlighted = false
     self.selected = false
     self.dragging = false
-    
+
     self.label = nil
     self.label_offset = {x=0.0, y=0.0}
 
@@ -33,6 +49,12 @@ end
 --- @return true|false inside
 function Handles.Handle:point_inside( x, y )
     error("Handles.Handle:is_inside() absract; not implemented")
+end
+
+
+--- @abstract
+function Handles.Handle:draw()
+    error("Handles.Handle:draw() absract; not implemented")
 end
 
 
@@ -81,14 +103,19 @@ end
 
 
 ------------------------------------------------------------------------------------------
+--- @class Handles.CircleHandle : Handles.Handle
+--- @field radius number the radius of the circular control handle
 Handles.CircleHandle = {}
+
+--- circular handle
+--- @param radius number the radius of the circular handle
+--- @return Handles.CircleHandle handle the new circle handle
 function Handles.CircleHandle:new(name, x, y, radius)
     Handles.CircleHandle.__index =  Handles.CircleHandle
     setmetatable( Handles.CircleHandle, {__index = Handles.Handle} )
-    local self = Handles.Handle:new(name)--, radius)
+    --- @class Handles.CircleHandle
+    local self = Handles.Handle:new(name, x, y)--, radius)
     setmetatable(self, Handles.CircleHandle)
-    self.x = x or 0.0
-    self.y = y or 0.0
     self.radius = radius or 5
     return self
 end
@@ -128,13 +155,28 @@ end
 ------------------------------------------------------------------------------------------
 -- controls
 
+--- @class Handles.SliderHandle : Handles.CircleHandle
+--- @field public x1 number
+--- @field public y1 number
+--- @field public x2 number
+--- @field public  y2 number
+--- @field public factor number
+--- @field public realtime_factor_signal boolean if true, emit factor-changed signal every tick, otherwise only on mouse-released
 Handles.SliderHandle = {}
+
 --- Makes a slider handle that is constrained to a line between two points.
+--- @param x1 number x coord of the start of the line control
+--- @param y1 number y coord of the start of the line control
+--- @param x2 number x coord of the end of the line control
+--- @param y2 number y coord of the end of the line control
+--- @param radius number radius of the circle control handle
 --- @param factor number the normalised position of the slider on the line (0.0 .. 1.0)
+--- @return Handles.SliderHandle handle the new slider handle
 function Handles.SliderHandle:new( name, x1, y1, x2, y2, radius, factor )
     Handles.SliderHandle.__index = Handles.SliderHandle
     setmetatable( Handles.SliderHandle, {__index = Handles.CircleHandle} )
-    local self = Handles.CircleHandle:new(name)
+    --- @class Handles.SliderHandle
+    local self = Handles.CircleHandle:new(name, 0.0, 0.0, radius)
     setmetatable( self, Handles.SliderHandle )
     self.x1 = x1 or 0.0
     self.y1 = y1 or 0.0

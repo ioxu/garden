@@ -80,8 +80,8 @@ function regenerate_circs()
         )
 end
 
+
 local radius_controls_signals = signal:new()
-local slider_controls_signals = signal:new()
 
 
 function on_slider_factor_changed(new_value, slider)
@@ -123,11 +123,11 @@ function Circles:init()
 
     local handle_one = handles.CircleHandle:new("circle_centre_handle",300,screen_centre[2], 7.5)
     handle_one.label = "center"
-    handle_one.signals:register("highlighted", on_handle_highlighted)
-    handle_one.signals:register("unhighlighted", on_handle_unhighlighted)
-    handle_one.signals:register("pressed", on_handle_pressed)
-    handle_one.signals:register("released", on_handle_released)
-    handle_one.signals:register("dragged", on_handle_dragged)
+    -- handle_one.signals:register("highlighted", on_handle_highlighted)
+    -- handle_one.signals:register("unhighlighted", on_handle_unhighlighted)
+    -- handle_one.signals:register("pressed", on_handle_pressed)
+    -- handle_one.signals:register("released", on_handle_released)
+    -- handle_one.signals:register("dragged", on_handle_dragged)
     widgets["circle_centre_control"] = handle_one
 
 
@@ -151,7 +151,7 @@ function Circles:init()
         handle_outer_circle_diameter.y - 35 - 75,
         4, 0.25
     )
-    test_slider.realtime_factor_signal = false
+    test_slider.realtime_factor_signal = true
     test_slider.signals:register("factor_changed", on_slider_factor_changed)
     widgets["test_slider"] = test_slider
 end
@@ -225,13 +225,8 @@ function Circles:update(dt)
     local ts = widgets["test_slider"]
     ts.x1 = ocdc.x + 35
     ts.y1 = ocdc.y - 35
-    ts.x2 = ocdc.x + 75 + 150 * math.sin( (global_time * 0.7532) * 0.6)
-    ts.y2 = ocdc.y - 35 - 75 * math.sin( global_time * 1.0)
-    -- ts.x1 = ocdc.x + 35
-    -- ts.y1 = ocdc.y + 20
-    -- ts.x2 = ocdc.x + 35 + 100
-    -- ts.y2 = ocdc.y + 20 + 35
-
+    ts.x2 = ocdc.x + 75 --+ 150 * math.sin( (global_time * 0.7532) * 0.6)
+    ts.y2 = ocdc.y - 35 - 75 --* math.sin( global_time * 1.0)
     ts:update_line()
     -------------------------------------------------------
 end

@@ -7,6 +7,7 @@ Handles = {}
 
 
 local font_small = love.graphics.newFont(10)
+local font_small_italic = love.graphics.newFont( "resources/fonts/XITS-Italic.otf", 15 )
 
 --- @class Handles.Handle
 --- @field name string
@@ -127,6 +128,7 @@ end
 
 
 function Handles.CircleHandle:draw()
+    love.graphics.setFont( font_small )
     love.graphics.setColor(1,1,1,1)
     love.graphics.setLineWidth(1)
     
@@ -161,6 +163,8 @@ end
 --- @field public x2 number x coord of the end of the line control
 --- @field public y2 number y coord of the end of the line control
 --- @field public factor number the normalised position of the slider on the line (0.0 .. 1.0)
+--- @field public slider_label string a label for the slider
+--- @field public slider_label_offset table {x=number, y=number}
 --- @field public realtime_factor_signal boolean if true, emit factor-changed signal every tick, otherwise only on mouse-released
 Handles.SliderHandle = {}
 
@@ -186,6 +190,8 @@ function Handles.SliderHandle:new( name, x1, y1, x2, y2, radius, factor )
     self.factor = factor or 0.0
     
     -- config options
+    self.slider_label = ""
+    self.slider_label_offset = {x=-7.5,y=7.5}
     self.realtime_factor_signal = true -- if false, will only emit "factor_changed" when mouse is released
     self._defer_emit_factor_signal = false -- buffer
 
@@ -255,6 +261,11 @@ function Handles.SliderHandle:draw()
     love.graphics.line( ex - orthx + extrapx, ey - orthy + extrapy, ex + orthx + extrapx, ey + orthy + extrapy  )
 
     Handles.CircleHandle.draw( self )
+
+    if self.slider_label ~= "" then
+        love.graphics.setFont( font_small_italic )
+        love.graphics.print(self.slider_label, self.x1 + self.slider_label_offset.x, self.y1 + self.slider_label_offset.y )
+    end
 end
 
 

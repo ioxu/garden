@@ -105,5 +105,13 @@ return{
                 self.states[v]:keyreleased( key, code, isrepeat )
             end
         end
+    end,
+
+    textinput=function(self, t)
+        for i,v in pairs( self.focus) do
+            if self.states[v].textinput then
+                self.states[v]:textinput( t )
+            end
+        end
     end
 }

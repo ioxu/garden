@@ -4,23 +4,23 @@ os.execute("chcp 65001 > NUL")
 print(string.format("LÖVE2D v%i.%i.%i\n%s", love.getVersion()) )
 
 --https://patorjk.com/software/taag font: tmplr, and https://asciiflow.com/#/ for therectangle
-print([[
-    
-    ┌─────────────────┐
-    │         ┓       │
-    │  ┏┓┏┓┏┓┏┫┏┓┏┓   │
-    │  ┗┫┗┻┛ ┗┻┗ ┛┗   │
-    │   ┛             │
+local garden_logo = [[
+    ┌─────────────────┐ 
+    │         ┓       │ 
+    │  ┏┓┏┓┏┓┏┫┏┓┏┓   │ 
+    │  ┗┫┗┻┛ ┗┻┗ ┛┗   │ 
+    │   ┛             │ 
     └─────────────────┘ 
-]])
+]]
+print("\n")
+print("\27[38;5;84m" .. garden_logo .. "\27[0m")
 
-
--- cmdline -------------------------------------------------------------------------------
-print("-----------------------------------\ncli")
+print("-----------------------------------\ncli:")
 -- lua-local-debugger for VSCode: https://github.com/tomblind/local-lua-debugger-vscode
 lldebugger = nil
 local DEBUG_MODE = false
 for k,v in pairs(arg) do
+    print(v)
     if v == "debug" then
         if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
             DEBUG_MODE = true
@@ -111,10 +111,12 @@ function love.draw()
     -- imgui.ShowDemoWindow()
     
     Show_scenes_selector()
+    -----------------------------------
     -- imgui.ShowDemoWindow()
     -- code to render imgui
     imgui.Render()
     imgui.love.RenderDrawLists()
+    -----------------------------------
     
     -- TODO: need some better way of coercing the mouse cursor
     -- if not imgui.love.GetWantCaptureMouse() then

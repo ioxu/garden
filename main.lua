@@ -35,21 +35,42 @@ end
 print("DEBUG_MODE ", DEBUG_MODE)
 
 
--- cimgui, dearimgui generated for LOVE2D ------------------------------------------------
--- from here: https://love2d.org/wiki/cimgui-love
--- here: https://codeberg.org/apicici/cimgui-love/releases
--- and here: https://codeberg.org/apicici/cimgui-love
--- I have put the .dll in the ./cimgui directory and ignored ./cimgui from git.
+-- local imgui_mode = "cimgui" -- "cimgui"
+
+-- if imgui_mode == "cimgui" then
+    -- cimgui, dearimgui generated for LOVE2D ------------------------------------------------
+    -- from here: https://love2d.org/wiki/cimgui-love
+    -- here: https://codeberg.org/apicici/cimgui-love/releases
+    -- and here: https://codeberg.org/apicici/cimgui-love
+    -- I have put the .dll in the ./cimgui directory and ignored ./cimgui from git.
+------------------------------------------------------------------------------------------
+-- https://github.com/ocornut/imgui/blob/master/imgui_demo.cpp
+-- line 80605, ShowExampleAppLog()
+-- https://github.com/ocornut/imgui/blob/a2366f902249107f1533a85d3d1f93ec193f52f0/imgui_demo.cpp#L8605C39-L8605C58
+
+-- some LuaJIT-ImGui examples
+-- https://github.com/sonoro1234/LuaJIT-ImGui/tree/docking_inter/examples
+
+-- need to use ffi types when passing a reference
+------------------------------------------------------------------------------------------
 print("-----------------------------------\ncimgui")
 print("based on version 1.90.8 (docking branch) of Dear ImGui and LÖVE 11.5")
 local lib_path = love.filesystem.getSource() .. "/lib/cimgui"
 -- local extension = jit.os == "Windows" and "dll" or jit.os == "Linux" and "so" or jit.os == "OSX" and "dylib"
 package.cpath = string.format("%s;%s/?.%s", package.cpath, lib_path, "dll")
 print("package.cpath: ", package.cpath)
-local imgui = require "lib.cimgui"
+imgui = require "lib.cimgui" -- note: global.
 print("-----------------------------------")
-
-
+-- elseif imgui_mode == "imgui" then
+--     -- https://github.com/slages/love-imgui
+--     print("-----------------------------------\nlove-imgui")
+--     local lib_path = love.filesystem.getSource() .. "/lib/imgui"
+--     package.cpath = string.format("%s;%s/?.%s", package.cpath, lib_path, "dll")
+--     print("package.cpath: ", package.cpath)
+--     imgui = require"imgui"
+--     print("imgui ", imgui)
+--     print("-----------------------------------")
+-- end
 ------------------------------------------------------------------------------------------
 love.window.setTitle("garden")
 io.stdout:setvbuf("no")
@@ -72,8 +93,9 @@ function love.load()
     imgui.love.Init()
     love.mouse.setVisible( false )
     
-    Scenes:init( "circles_around_circles")--"quadtree_main" )
-    
+    -- Scenes:init("circles_around_circles")--"enet_test") --"circles_around_circles")--"quadtree_main" )
+    Scenes:init("enet_test")
+
     -- graphics
     love.graphics.setLineStyle("rough")
 end
@@ -89,13 +111,16 @@ function love.draw()
     -- imgui.ShowDemoWindow()
     
     Show_scenes_selector()
-
+    -- imgui.ShowDemoWindow()
     -- code to render imgui
     imgui.Render()
     imgui.love.RenderDrawLists()
     
     -- TODO: need some better way of coercing the mouse cursor
+    -- if not imgui.love.GetWantCaptureMouse() then
+
     if not imgui.love.GetWantCaptureMouse() then
+    -- if not imgui.GetWantCaptureMouse() then
         love.mouse.setVisible( false )
     else
         love.mouse.setVisible( true )
@@ -114,6 +139,7 @@ function love.draw()
         love.graphics.setFont(font_small)
         love.graphics.print( "(ctrl-F4 to breakpoint)", love.graphics.getWidth() /2 - 53, 44 )
     end
+
 end
 
 
@@ -154,8 +180,11 @@ end
 
 ------------------------------------------------------------------------------------------
 love.mousemoved = function(x, y, ...)
-    imgui.love.MouseMoved(x, y)
+    imgui.love.MouseMoved(x,y)
+    -- imgui.MouseMoved(x,y)
+    -- if not imgui.love.GetWantCaptureMouse() then
     if not imgui.love.GetWantCaptureMouse() then
+    -- if not imgui.GetWantCaptureMouse() then
         Scenes:mousemoved( x,y, ... )
     end
 end
@@ -163,7 +192,9 @@ end
 
 love.mousepressed = function(x, y, button, ...)
     imgui.love.MousePressed(button)
+    -- imgui.MousePressed(button)
     if not imgui.love.GetWantCaptureMouse() then
+    -- if not imgui.GetWantCaptureMouse() then
         Scenes:mousepressed( x, y, button, ... )
     end
 end
@@ -171,7 +202,9 @@ end
 
 love.mousereleased = function(x, y, button, ...)
     imgui.love.MouseReleased(button)
+    -- imgui.MouseReleased(button)
     if not imgui.love.GetWantCaptureMouse() then
+    -- if not imgui.GetWantCaptureMouse() then
         Scenes:mousereleased( x,y,button, ... )
     end
 end
@@ -179,36 +212,45 @@ end
 
 love.wheelmoved = function(x, y)
     imgui.love.WheelMoved(x, y)
+    -- imgui.WheelMoved(x, y)
     if not imgui.love.GetWantCaptureMouse() then
-        -- your code here 
+    -- if not imgui.GetWantCaptureMouse() then
+        Scenes:wheelmoved(x,y)
     end
 end
 
 
 love.keyreleased = function(key, ...)
     imgui.love.KeyReleased(key)
+    -- imgui.KeyReleased(key)
     if not imgui.love.GetWantCaptureKeyboard() then
-        -- your code here 
+    -- if not imgui.GetWantCaptureKeyboard() then
+        Scenes:keyreleased( key, ... )
     end
 end
 
 
 love.textinput = function(t)
     imgui.love.TextInput(t)
+    -- imgui.TextInput(t)
     if not imgui.love.GetWantCaptureKeyboard() then
-        -- your code here 
+    -- if not imgui.GetWantCaptureKeyboard() then
+        Scenes:textinput( t )
     end
 end
 
 
 love.quit = function()
     return imgui.love.Shutdown()
+    -- return imgui.ShutDown()
 end
 
 
 function love.keypressed(key, code, isrepeat)
     imgui.love.KeyPressed(key)
+    -- imgui.KeyPressed(key)
     if not imgui.love.GetWantCaptureKeyboard() then
+    -- if not imgui.GetWantCaptureKeyboard() then
         if key == "escape" then
             love.event.quit()
         end

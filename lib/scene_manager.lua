@@ -13,7 +13,7 @@ return{
             if string.find(v, ".lua") then
                 print(string.format("[scene_manager] found %s", v))
                 local state_name = string.gsub(v, ".lua", "")
-                self.states[state_name]=require("scenes." .. string.gsub(v, ".lua", ""))
+              self.states[state_name]=require("scenes." .. string.gsub(v, ".lua", ""))
                 if self.states[state_name].description then
                     self.descriptions[state_name] = self.states[state_name].description
                 else
@@ -82,11 +82,27 @@ return{
             end
         end
     end,
+    
+    wheelmoved=function(self, x, y)
+        for i,v in pairs(self.focus) do
+            if self.states[v].wheelmoved then
+                self.states[v]:wheelmoved( x, y)
+            end
+        end
+    end,
 
     keypressed=function(self, key, code, isrepeat)
         for i,v in pairs( self.focus) do
             if self.states[v].keypressed then
                 self.states[v]:keypressed( key, code, isrepeat )
+            end
+        end
+    end,
+
+    keyreleased=function(self, key, code, isrepeat)
+        for i,v in pairs( self.focus) do
+            if self.states[v].keyreleased then
+                self.states[v]:keyreleased( key, code, isrepeat )
             end
         end
     end

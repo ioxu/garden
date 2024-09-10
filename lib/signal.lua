@@ -1,3 +1,7 @@
+
+--- Signal manager class
+--- @class Signal
+--- @field listeners
 Signal = {}
 Signal.__index = Signal
 
@@ -8,7 +12,8 @@ function Signal:new()
     return self
 end
 
-
+--- @param event string string signal to register to a function
+--- @param listener function callback for emitted string signal
 function Signal:register(event, listener)
     if not self.listeners[event] then
         self.listeners[event] = {}
@@ -27,7 +32,7 @@ function Signal:unregister(event, listener)
     end
 end
 
-
+--- @param event string events to emit from this Signal
 function Signal:emit( event, ... )
     if not self.listeners[event] then return end
     for _, listener in ipairs(self.listeners[event]) do

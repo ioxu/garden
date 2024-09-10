@@ -4,187 +4,113 @@ EnetTest.description = "testing ground for the networking components"
 
 local enettest = require "lib.enettest" -- some utils
 local net = require "lib.network" -- main networking objects
--- local ffi = require"ffi"
-
--- local Slab = require "Slab"
 local gspot = require "lib.gspot.Gspot"
-
+local signal = require "lib.signal"
 
 local font_small = love.graphics.newFont(10)
 
 
-
-log_window = {}
-log_window.log_text = "" --{}
-log_window.config = {}
-log_window.config.autoscroll = true
-log_window.n_lines = 0 -- update manually
-
-
-function log_window:log( text )
-    self.log_text = self.log_text .. text
-    self.n_lines = self.n_lines + 1
-end
-
-function log_window:draw()
-
-end
-
-local server_start_button = false
+local font_large = love.graphics.newFont(60)
 
 ------------------------------------------------------------------------------------------
-local rng = love.math.newRandomGenerator()
-rng:setSeed( os.time() )
+local oldprint = print
+local print_header = "\27[38;5;221m[enet_test]\27[0m "
+local function print(...)
+    local result = ""
+    for i,v in pairs( {...} ) do
+        result = result .. tostring(v)
+    end
+    oldprint( print_header .. result )
+end
+------------------------------------------------------------------------------------------
 
-local client_names = {"enit", "commosa", "eltuu", "b-aoAR"}
+------------------------------------------------------------------------------------------
+-- stats panel
+local stats_panel = enettest.stats_window()
 
-local stats_window = enettest.stats_window()
+------------------------------------------------------------------------------------------
+-- log panel
+local log_panel = enettest.log_panel({150, 250, 512, 512})
 
 ------------------------------------------------------------------------------------------
 -- server panel
 local server_panel = enettest.server_panel()
-local test_log_with_dummy_logs = true
-function test_log()
-    if test_log_with_dummy_logs then
-        if rng:random() < 0.1 then
-            -- can't seem to work out how to add text to the tex control without adding a whole new gspot:text instance each line.
-            local new_str = string.format("%s:[%s][command][%s]", log_window.n_lines, os.time(), client_names[rng:random(#client_names)] )
-            log_window:log( new_str  )
-            scrollgroup:addchild(gspot:text(new_str, {w = 512} ),'vertical')
-            -- scrollgroup_logtext.label = log_window.log_text
-        end
-    end
-end
 
 -- signal callbacks
 function _on_test_log_button_pressed()
     print("_on_test_log_button_pressed")
     test_log_with_dummy_logs = not test_log_with_dummy_logs
+    if test_log_with_dummy_logs then
+        server_panel.button_test_log.label = "test_log (enabled)"
+    else
+        server_panel.button_test_log.label = "test_log (disabled)"
+    end
 end
+
+local server_started_dummy = false
 
 function _on_start_server_button_pressed()
     print("_on_start_server_button_pressed")
+    server_started_dummy = not server_started_dummy
+    if server_started_dummy then
+        server_panel.button_start.label = "started"
+        server_panel.button_start.style.hilite = {0.1,0.55,0.1,1.0}
+        server_panel.button_start.style.focus = {0.4,1.0,0.4,1.0}
+    else
+        server_panel.button_start.label = "stopped"
+        server_panel.button_start.style.hilite = {1.0,0.2,0.2,1.0}
+        server_panel.button_start.style.focus = {1.0,0.4,0.4,1.0}
+    end
 end
-server_panel.signals:register("start_button_clicked", _on_start_server_button_pressed)
-server_panel.signals:register("test_log_button_clicked", _on_test_log_button_pressed)
+
+server_panel.signals:register("button_start_clicked", _on_start_server_button_pressed)
+server_panel.signals:register("button_test_log_clicked", _on_test_log_button_pressed)
+
+------------------------------------------------------------------------------------------
+-- dummy logging
+local test_log_with_dummy_logs = false
+local rng = love.math.newRandomGenerator()
+rng:setSeed( os.time() )
+local client_names = {"enit", "commosa", "eltuu", "b-aoAR"}
+function test_log()
+    if test_log_with_dummy_logs then
+        if rng:random() < 0.1 then
+            local new_str = string.format("%s:[%s][command][%s]", log_panel.n_lines, os.time(), client_names[rng:random(#client_names)] )
+            log_panel:log( new_str )
+        end
+    end
+end
+
 ------------------------------------------------------------------------------------------
 function EnetTest:init()
-    log_window:log( "[log begin]" )
-    -- Slab.Initialize()
-
-	log_group = gspot:group('Log', {150, 250, 512, 512})
-	log_group.drag = true
-	-- log_group.tip = 'main log window'
-
-    button_clear = gspot:button( "clear log", {x=2, y=2, w=50,h = gspot.style.unit-4}, log_group )
-    button_clear.style.hilite = {0.4,0.4,0.4,1.0}
-    button_clear.click = function(this)
-        print("clearing log")
-        log_window.log_text = ""
-        local children_to_remove = {}
-        for k,v in pairs(scrollgroup.children) do
-            if v.elementtype == "text" then
-                table.insert(children_to_remove, v)
-            end
-        end
-        for k,child in pairs(children_to_remove) do
-            scrollgroup:remchild( child )
-            gspot:rem( child )
-        end
-        log_window:log("[log cleared]")
-        scrollgroup:addchild(gspot:text(log_window.log_text, {w = 512} ),'vertical')
-    end
-
-    local autoscroll_checkbox = gspot:checkbox("autoscroll", {x = 50+2+5, y = 2, r = 6}, log_group)
-    autoscroll_checkbox.value = true
-    autoscroll_checkbox.style.fg = {1.0, 0.5, 0.0, 1.0}
-
-    autoscroll_checkbox.click = function(this)
-		gspot[this.elementtype].click(this) -- calling option's base click() to preserve default functionality, as we're overriding a reserved behaviour
-		if this.value then this.style.fg = {1.0, 0.5, 0.0, 1.0}
-		else this.style.fg = {1.0, 1.0, 1.0, 1.0} end
-        log_window.config.autoscroll = not log_window.config.autoscroll
-        -- print("log_window.config.autoscroll ", log_window.config.autoscroll)
-        -- print("\27[31mlog_window.config\27[0m.autoscroll ", log_window.config.autoscroll)
-        -- print("\27[31;5;193mlog_window.config\27[0m.autoscroll ", log_window.config.autoscroll)
-        print("\27[38;5;177mlog_window.config\27[0m.autoscroll ", log_window.config.autoscroll)
-    end
-
-    -- scrollgroup's children, excepting its scrollbar, will scroll
-	scrollgroup = gspot:scrollgroup(nil, {0, gspot.style.unit, 512, 512}, log_group) -- scrollgroup will create its own scrollbar
-	scrollgroup.style.bg = {0.2,0.2,0.2,1.0}
-    -- scrollgroup.scrollh.tip = 'Scroll (mouse or wheel)' -- scrollgroup.scrollh is the horizontal scrollbar
-	scrollgroup.scrollh.style.hs = scrollgroup.style.unit*2
-	-- scrollgroup.scrollv.tip = scrollgroup.scrollh.tip -- scrollgroup.scrollv is the vertical scrollbar
-	-- scrollgroup.scroller:setshape('circle') -- to set a round handle
-	-- scrollgroup.scrollh.drop = function(this) gspot:feedback('Scrolled to : '..this.values.current..' / '..this.values.min..' - '..this.values.max) end
-	-- scrollgroup.scrollv.drop = scrollgroup.scrollh.drop
-	scrollgroup.scrollv.style.hs = "auto"
-
-    -- scrollgroup:addchild(gspot:text(log_window.log_text, {w = 128}), 'grid')
-    scrollgroup_logtext = gspot:text(log_window.log_text, {w = 512}, scrollgroup)
-    
-    -- scrollgroup:addchild(gspot:text(log_window.log_text, {w = 512}), 'vertical')
-    scrollgroup:addchild(scrollgroup_logtext, 'vertical')
-
-	-- additional scroll controls
-	button_up = gspot:button('up', {log_group.pos.w, 0}, log_group) -- a small button attached to the scrollgroup's group, because all of a scrollgroup's children scroll
-	button_up.click = function(this)
-		local scroll = scrollgroup.scrollv
-		scroll.values.current = math.max(scroll.values.min, scroll.values.current - scroll.values.step) -- decrement scrollgroup.scrollv.values.current by scrollgroup.scrollv.values.step, and the slider will go up a notch
-		scroll:drop()
-	end
-	button_down = gspot:button('dn', {log_group.pos.w, log_group.pos.h + gspot.style.unit}, log_group)
-	button_down.click = function(this)
-		local scroll = scrollgroup.scrollv
-		scroll.values.current = math.min(scroll.values.max, scroll.values.current + scroll.values.step) -- this one increment's the scrollbar's values.current, moving the slider down a notch
-		scroll:drop()
-	end
-    -- for some reason this last button ^ would
-    -- become nil while removing the text objects from 
-    -- the scrollgroup children. So had ot make an extra sacrificial button.
-	button_down_2 = gspot:button('sacrifical', {log_group.pos.w, log_group.pos.h + gspot.style.unit+18}, log_group)
-    button_down_2:hide()
-
+    log_panel:log( "[log begin]" )
 end
 
 
 function EnetTest:update(dt)
-    -- Slab.Update(dt)
-    -- Slab.BeginWindow("server", {Title = "server", X = 25, Y = 200, NoSavedSettings = true } ) 
-    -- if Slab.Button("start") then
-    --     server_start_button = true
-    -- end
-    -- Slab.EndWindow()
-
     test_log()
-
-    --------------------------------------------------------------------------------------
-    -- autoscroll (move to _on_log event)
-    --scrollgroup.scrollv:drag(0.0, scrollgroup.scrollv.values.max - 1 ) -- scrollgroup.scrollv.values.max)
-    if log_window.config.autoscroll then
-        scrollgroup.scrollv.values.current = scrollgroup.scrollv.values.max
-        -- scrollgroup.scrollv:drop()
-    end
-    --------------------------------------------------------------------------------------
     gspot:update(dt)
 end
 
 function EnetTest:draw()
     love.graphics.setColor(1,1,1,1)
+    love.graphics.clear(0.15,0.15,0.15,1.0)
     love.graphics.print("Enet test")
 
-    -- Slab.Draw()
+    love.graphics.setColor(0.4,0.4,0.4,1.0)
+    love.graphics.setFont(font_large)
+    love.graphics.print("server stopped", 32, 32)
 
     gspot:draw()
 
+    love.graphics.setFont(font_small)
     love.graphics.setColor(1,.3,.3,1)
     -- love.graphics.setFont( font_small )
     love.graphics.print("[  ] put gspot log window components into its own table object\
 [  ] update autoscroll _on_add_log events instead of every tick\
 [  ] remove cimgui",
-                        log_group:getpos().x + log_group:getmaxw() +5,
-                        log_group:getpos().y)
+                        log_panel.window:getpos().x + log_panel.window:getmaxw() +5,
+                        log_panel.window:getpos().y)
 end
 
 ------------------------------------------------------------------------------------------
@@ -218,15 +144,6 @@ function EnetTest:wheelmoved(x, y)
 	gspot:mousewheel(x, y)
 end
 
-------------------------------------------------------------------------------------------
-local oldprint = print
-local print_header = "\27[38;5;221m[enet_test]\27[0m"
-function print(...)
-    local result = ""
-    for i,v in pairs( {...} ) do
-        result = result .. tostring(v)
-    end
-    oldprint( print_header .. result )
-end
+
 ------------------------------------------------------------------------------------------
 return EnetTest

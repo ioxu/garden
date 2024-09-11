@@ -53,7 +53,6 @@ end
 function _on_start_server_button_pressed()
     print("_on_start_server_button_pressed")
     if server.host == nil then
-        log_panel:log( "[starting server]" )
         server:start()
         if server.host then
             log_panel:log(string.format("[server started at %s]",tostring(server)))
@@ -64,7 +63,6 @@ function _on_start_server_button_pressed()
             log_panel:log(string.format("[failed to start server at %s]",tostring(server)))
         end
     elseif server.host then
-        log_panel:log( "[stopping server]" )
         if server.host then
             server:stop()
             if not server.host then
@@ -110,14 +108,15 @@ function _on_peer_disconnected( peer )
 end
 
 function _on_peer_received( message, peer )
-    log_panel:log( string.format("[received] '%s' %s", message, peer) )
+    log_panel:log( string.format("[received] %s '%s'", peer, message) )
 end
 
 ------------------------------------------------------------------------------------------
 function EnetTest:init()
     log_panel:log( "[log begin]" )
     -- server = net.Server:new( "test_server", "127.0.0.1", 6789 )
-    server = net.Server:new( "test_server", "192.168.1.106", 6789 )
+    server = net.Server:new( "test_server", "192.168.1.103", 6789 )
+    -- server = net.Server:new( "test_server" )
     print(string.format("server: %s", server))
     server.signals:register("connected", _on_peer_connected)
     server.signals:register("disconnected", _on_peer_disconnected)
@@ -150,8 +149,7 @@ function EnetTest:draw()
     love.graphics.setFont(font_small)
     love.graphics.setColor(1,.3,.3,1)
     -- love.graphics.setFont( font_small )
-    love.graphics.print("[  ] put gspot log window components into its own table object\
-[  ] update autoscroll _on_add_log events instead of every tick\
+    love.graphics.print("[  ] update autoscroll _on_add_log events instead of every tick\
 [  ] remove cimgui",
                         log_panel.window:getpos().x + log_panel.window:getmaxw() +5,
                         log_panel.window:getpos().y)

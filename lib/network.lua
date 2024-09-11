@@ -37,7 +37,7 @@ function Network.Server:new( name, address, port )
     local self = setmetatable({}, Network.Server)
     self.name = name or "server"
     self.address = address or "127.0.0.1"
-    self.port = port or 5678
+    self.port = port or 6789
     self.host = nil
     self.peer = nil
     self.received_data = false
@@ -59,7 +59,7 @@ function Network.Server:start()
     if self.host then
         print(string.format("started server at %s", self))
     else
-        print(string.format("failed to start server at %s", self))
+        print(string.format("\27[31;5;193mfailed to start server at %s\27[0m", self))
     end
     return self.host
 end
@@ -105,7 +105,7 @@ function Network.Server:update( dt )
             end
         end
         if event.type == "receive" then
-            received_message = split_by_pipe(event.data)[2]
+            received_message = event.data -- split_by_pipe(event.data)[2]
             event.peer:send( string.format("recieved message '%s'", received_message ))
             self.signals:emit("received", received_message, event.peer)
         end
@@ -135,6 +135,56 @@ end
 
 function Network.Server.__tostring( self )
     return string.format("%s@%s:%s", self.name, self.address, tostring(self.port))
+end
+
+------------------------------------
+Network.Client = {}
+
+function Network.Client:new(name)
+    Network.Client.__index = Network.Client
+    local self = setmetatable({}, Network.Client)
+    self.name = name or "client"
+    self.host = enet.host_create()
+    self.peer = nil
+    self.received_data = nil
+    return self
+end
+
+
+function Network.Client:connect(address, port)
+    self.host:connect(string.format('%s:%s', address, port))--'127.0.0.1:6789')
+end
+
+
+function Network.Client:is_connected()
+    return self.received_data
+end
+
+
+function Network.Client:update(dt)
+    if self.host then
+        local event = self.host:service()
+        if event then
+            self.received_data = true
+            print("----")
+            for k, v in pairs(event) do
+                print(k,v)
+            end
+            event.peer:send("miow")
+        end
+    end
+end
+
+
+function Network.Client:disconnect()
+    print("client disconnecting ..")
+    if self.peer then
+        print(string.format("  disconnect peer %s", self.peer))
+        self.peer:disconnect_now()
+        self.peer = nil
+    end
+    self.host = nil
+    self.received_data = false
 end
 
 ------------------------------------

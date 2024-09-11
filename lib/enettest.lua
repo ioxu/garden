@@ -119,14 +119,17 @@ function Enettest.log_panel(pos)
         this_panel.log_text = this_panel.log_text .. text
         this_panel.n_lines = this_panel.n_lines + 1
         this_panel.scrollgroup:addchild(gspot:text(text, {w = 512} ),'vertical')
+        
+        -- apply autoscroll when a new line is logged
+        if this.autoscroll then
+            this.scrollgroup.scrollv.values.current = this.scrollgroup.scrollv.values.max
+            
+        end
     end
 
     -- love callbacks
     this.scrollgroup.update = function( this_scrollg, dt )
         -- print("this.scrollgroup.update")
-        if this.autoscroll then
-            this_scrollg.scrollv.values.current = this_scrollg.scrollv.values.max
-        end
     end
 
     return this

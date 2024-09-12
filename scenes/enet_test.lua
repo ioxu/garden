@@ -1,3 +1,4 @@
+-- Server scene
 local EnetTest ={}
 EnetTest.scene_name = "Enet networking components test"
 EnetTest.description = "testing ground for the networking components"
@@ -8,7 +9,7 @@ local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
 
 ------------------------------------------------------------------------------------------
-local server = nil
+local server = net.Server:new()
 
 ------------------------------------------------------------------------------------------
 local oldprint = print
@@ -54,7 +55,13 @@ end
 
 function _on_start_server_button_pressed()
     print("_on_start_server_button_pressed")
+
+    -- update address from UI
+    server.address = server_panel.found_address.label
+
     if server.host == nil then
+        print(":: ", server_panel.found_address.label, " ", tonumber(server_panel.port))
+
         server:start()
         if server.host then
             log_panel:log(string.format("[server started at %s]",tostring(server)))
@@ -79,8 +86,16 @@ function _on_start_server_button_pressed()
     end
 end
 
+
+function _on_port_field_changed( new_port_value)
+    local old_port_value = server.port
+    print(string.format("_on_port_field_changed (%s -> %s)", old_port_value, new_port_value))
+    server.port = tonumber(new_port_value)
+end
+
 server_panel.signals:register("button_start_clicked", _on_start_server_button_pressed)
 server_panel.signals:register("button_test_log_clicked", _on_test_log_button_pressed)
+server_panel.signals:register("port_field_changed", _on_port_field_changed)
 
 ------------------------------------------------------------------------------------------
 -- dummy logging
@@ -117,7 +132,7 @@ end
 function EnetTest:init()
     log_panel:log( "[log begin]" )
     -- server = net.Server:new( "test_server", "127.0.0.1", 6789 )
-    server = net.Server:new( "test_server", "192.168.1.103", 6789 )
+    -- server = net.Server:new( "test_server", "192.168.1.103", 6789 )
     -- server = net.Server:new( "test_server" )
     print(string.format("server: %s", server))
     server.signals:register("connected", _on_peer_connected)
@@ -167,9 +182,9 @@ function EnetTest:keypressed(key, code, isrepeat)
 	end
 end
 
-function EnetTest.textinput(key)
+function EnetTest:textinput(t)
 	if gspot.focus then
-		gspot:textinput(key) -- only sending input to the gui if we're not using it for something else
+		gspot:textinput(t) -- only sending input to the gui if we're not using it for something else
 	end
 end
 

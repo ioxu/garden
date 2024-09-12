@@ -20,7 +20,7 @@ Network = {}
 --- @class Network.Server
 --- @field name string
 --- @field address string
---- @field port integer
+--- @field port number
 --- @field host table
 --- @field peer table
 --- @field received_data boolean
@@ -31,7 +31,7 @@ Network.Server = {}
 --- Base server type
 --- @param name string arbitrary name
 --- @param address string IPv4 address
---- @param port integer port number
+--- @param port number port number
 function Network.Server:new( name, address, port )
     Network.Server.__index = Network.Server
     local self = setmetatable({}, Network.Server)

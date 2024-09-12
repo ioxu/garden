@@ -233,12 +233,12 @@ end
 
 
 love.textinput = function(t)
-    imgui.love.TextInput(t)
+    -- imgui.love.TextInput(t)
     -- imgui.TextInput(t)
-    if not imgui.love.GetWantCaptureKeyboard() then
+    -- if not imgui.love.GetWantCaptureKeyboard() then
     -- if not imgui.GetWantCaptureKeyboard() then
         Scenes:textinput( t )
-    end
+    -- end
 end
 
 

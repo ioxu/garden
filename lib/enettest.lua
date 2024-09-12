@@ -1,4 +1,5 @@
--- tools for the enet_test.lua test scene
+-- tools for the enet_test.lua test server scene
+-- server UI
 local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
 local net = require "lib.network"
@@ -31,8 +32,19 @@ function Enettest.server_panel( pos )
     local found_IPv4_address = net.get_ip_info()
     print("found_IPv4_address", found_IPv4_address)
     this.found_address = gspot:text( found_IPv4_address, {x=10, y=0, w=this.window.pos.w-8, h=unit}, this.window )
+    
     this.found_address.style.fg = {0.6,0.6,0.6,1.0}
     this.window:addchild( this.found_address, 'vertical')
+
+    this.port = "6789"
+    this.port_input = gspot:input("port", {x=32, w=this.window.pos.w -32 -4 ,  h= unit}, this.window, this.port)
+    this.port_input.keyrepeat = true
+    this.window:addchild( this.port_input, 'vertical' )
+    this.port_input.done =  function(this_input)
+        print("[server_panel] port changed to: ", this_input.value)
+        this.port = this_input.value
+        this.signals:emit( "port_field_changed", this.port)
+    end
 
     -- start evrer button
     this.button_start = gspot:button("start", {x=4, y=unit/2, w=this.window.pos.w-8, h=unit}, this.window  )

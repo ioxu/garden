@@ -141,6 +141,16 @@ function EnetTest:init()
 end
 
 
+function EnetTest:defocus()
+    print(":defocus()")
+end
+
+
+function EnetTest:focus()
+    print(":focus()")
+end
+
+
 function EnetTest:update(dt)
     test_log()
     server:update()
@@ -166,8 +176,7 @@ function EnetTest:draw()
     love.graphics.setFont(font_small)
     love.graphics.setColor(1,.3,.3,1)
     -- love.graphics.setFont( font_small )
-    love.graphics.print("[  ] update autoscroll _on_add_log events instead of every tick\
-[  ] remove cimgui",
+    love.graphics.print("[  ] remove cimgui",
                         log_panel.window:getpos().x + log_panel.window:getmaxw() +5,
                         log_panel.window:getpos().y)
 end

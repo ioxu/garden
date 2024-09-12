@@ -26,8 +26,13 @@ return{
         end
     end,
     push=function(self, state)
+        -- print("[scene_manager] .push()", state)
+        -- print("[scene_manager] self.currentFocus: ", self:currentFocus())
         self.states[state]:init()
         self.focus[#self.focus+1]=state
+        if self.states[state].focus then
+            self.states[state]:focus()
+        end
     end,
     pop=function(self)
         local cfocus=self:currentFocus()
@@ -39,6 +44,11 @@ return{
         end
     end,
     switch=function(self, state)
+        -- print("[scene_manager] .switch()", state)
+        -- print("[scene_manager] .currentFocus:", self:currentFocus())
+        if self.states[self:currentFocus()].defocus then
+            self.states[self:currentFocus()]:defocus()
+        end
         for i,v in ipairs(self.focus) do
             self.focus[i]=nil
         end

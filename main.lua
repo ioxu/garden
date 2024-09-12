@@ -1,4 +1,7 @@
 -- set the code page to UTF-8 to render non-ASCII characters correctly (e.g. Ö)
+local gspot = require "lib.gspot.Gspot"
+local signal = require "lib.signal"
+
 os.execute("chcp 65001 > NUL")
 
 print(string.format("LÖVE2D v%i.%i.%i\n%s", love.getVersion()) )
@@ -72,6 +75,19 @@ print("-----------------------------------")
 --     print("-----------------------------------")
 -- end
 ------------------------------------------------------------------------------------------
+-- gspot scene selector
+local scene_selector_ui = {}
+function new_scene_selector()
+    local this = scene_selector_ui
+    local w = 150
+    local h = 200
+    this.window = gspot:group("scene selector", {x = love.graphics.getWidth() - w - 16, y = 16, w= w, h = h })
+    this.window.drag = true
+    this.signals =  signal:new()
+    return this
+end
+scene_selector = new_scene_selector()
+------------------------------------------------------------------------------------------
 love.window.setTitle("garden")
 io.stdout:setvbuf("no")
 
@@ -111,6 +127,7 @@ function love.draw()
     -- imgui.ShowDemoWindow()
     
     Show_scenes_selector()
+    gspot:draw()
     -----------------------------------
     -- imgui.ShowDemoWindow()
     -- code to render imgui
@@ -150,6 +167,8 @@ function love.update(dt)
 
     Scenes:update(dt)
     
+    gspot:update(dt)
+
     imgui.love.Update(dt)
     imgui.NewFrame()
     

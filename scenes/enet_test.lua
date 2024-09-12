@@ -22,6 +22,8 @@ local function print(...)
 end
 
 ------------------------------------------------------------------------------------------
+-- local inferred_address = net.get_ip_info()
+------------------------------------------------------------------------------------------
 local font_small = love.graphics.newFont(10)
 local font_large = love.graphics.newFont(40)
 

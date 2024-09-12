@@ -1,6 +1,7 @@
 -- tools for the enet_test.lua test scene
 local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
+local net = require "lib.network"
 Enettest = {}
 
 local unit = gspot.style.unit
@@ -26,6 +27,12 @@ function Enettest.server_panel( pos )
     this.window.drag = true
     this.signals = signal:new()
     -- this.window.style.bg = {0.42, 0.275, 0.192,1}--{ 1.0,0.5,0.0,1.0 }
+
+    local found_IPv4_address = net.get_ip_info()
+    print("found_IPv4_address", found_IPv4_address)
+    this.found_address = gspot:text( found_IPv4_address, {x=10, y=0, w=this.window.pos.w-8, h=unit}, this.window )
+    this.found_address.style.fg = {0.6,0.6,0.6,1.0}
+    this.window:addchild( this.found_address, 'vertical')
 
     -- start evrer button
     this.button_start = gspot:button("start", {x=4, y=unit/2, w=this.window.pos.w-8, h=unit}, this.window  )

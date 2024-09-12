@@ -188,6 +188,23 @@ function Network.Client:disconnect()
 end
 
 ------------------------------------
+function Network.get_ip_info()
+    print("[get_ip_info] io.popen('ipconfig') :")
+    local IPv4_address  = nil
+    local res = io.popen("ipconfig")
+    for line in res:lines() do
+        if line.find(line, "IPv4") then
+            print("[get_ip_info] ", line)
+            local colon_index = line.find(line, ":")
+            local address = line.sub(line, colon_index+1)
+            IPv4_address = string.gsub(address, "%s+", "")
+            print(string.format("[address] '%s'", IPv4_address))
+        end
+    end
+    return IPv4_address
+end
+
+
 function split_by_pipe(input)
     local result = {}
     for part in string.gmatch(input, "([^|]+)") do

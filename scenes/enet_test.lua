@@ -128,30 +128,43 @@ function _on_peer_received( message, peer )
     log_panel:log( string.format("[received] %s '%s'", peer, message) )
 end
 
+server.signals:register("connected", _on_peer_connected)
+server.signals:register("disconnected", _on_peer_disconnected)
+server.signals:register("received", _on_peer_received)
+
 ------------------------------------------------------------------------------------------
 function EnetTest:init()
+    --- scene_manager callback
     log_panel:log( "[log begin]" )
     -- server = net.Server:new( "test_server", "127.0.0.1", 6789 )
     -- server = net.Server:new( "test_server", "192.168.1.103", 6789 )
     -- server = net.Server:new( "test_server" )
     print(string.format("server: %s", server))
-    server.signals:register("connected", _on_peer_connected)
-    server.signals:register("disconnected", _on_peer_disconnected)
-    server.signals:register("received", _on_peer_received)
 end
 
-
 function EnetTest:defocus()
+    --- scene_manager callback
     print(":defocus()")
+    -- hide these GUIs
+    server_panel.window:hide()
+    log_panel.window:hide()
+    stats_panel.window:hide()
 end
 
 
 function EnetTest:focus()
+    --- scene_manager callback
     print(":focus()")
+    -- show these GUIs
+    -- WARNING: will unhide things that are not meant to be shown
+    server_panel.window:show()
+    log_panel.window:show()
+    stats_panel.window:show()
 end
 
 
 function EnetTest:update(dt)
+    --- scene_manager callback
     test_log()
     server:update()
     gspot:update(dt)
@@ -159,6 +172,7 @@ end
 
 
 function EnetTest:draw()
+    --- scene_manager callback
     love.graphics.setColor(1,1,1,1)
     love.graphics.clear(0.15,0.15,0.15,1.0)
     love.graphics.print("Enet test")

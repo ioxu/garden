@@ -119,19 +119,21 @@ function Enettest.log_panel(pos)
 	this.button_up.click = function(this_button)
 		local scroll = this.scrollgroup.scrollv
 		scroll.values.current = math.max(scroll.values.min, scroll.values.current - scroll.values.step) -- decrement scrollgroup.scrollv.values.current by scrollgroup.scrollv.values.step, and the slider will go up a notch
-		scroll:drop()
+		-- print("scroll.up ", scroll)
+        -- scroll:drop()
 	end
 	this.button_down = gspot:button('dn', {this.window.pos.w, this.window.pos.h + gspot.style.unit}, this.window)
 	this.button_down.click = function(this_button)
 		local scroll = this.scrollgroup.scrollv
 		scroll.values.current = math.min(scroll.values.max, scroll.values.current + scroll.values.step) -- this one increment's the scrollbar's values.current, moving the slider down a notch
-		scroll:drop()
+		-- print("scroll.down ", scroll)
+        -- scroll:drop()
 	end
     -- for some reason this last button ^ would
     -- become nil while removing the text objects from 
     -- the scrollgroup children. So had ot make an extra sacrificial button.
-	this.button_down_2 = gspot:button('sacrifical', {this.window.pos.w, this.window.pos.h + this.window.style.unit+18}, this.window)
-    this.button_down_2:hide()
+	-- this.button_down_2 = gspot:button('sacrifical', {this.window.pos.w, this.window.pos.h + this.window.style.unit+18}, this.window)
+    -- this.button_down_2:hide()
 
     -- loging
     this.log = function(this_panel, text)
@@ -154,21 +156,23 @@ function Enettest.log_panel(pos)
     return this
 end
 
-
+local stats_panel_table = {}
 function Enettest.stats_window()
-    local window = gspot:group("stats", {700,300,100,200})
-    window.drag = true
+    local this = stats_panel_table
+    this.window = gspot:group("stats", {700,300,100,200})
+    this.window.drag = true
 
     -- scrollgroup = gspot:scrollgroup("scrollgroup", {})
 
-    local fps_label = gspot:text( 'fps', {w = window.pos.w}, window )
-    window:addchild(fps_label, 'vertical')
+    this.fps_label = gspot:text( 'fps', {w = this.window.pos.w}, this.window )
+    this.window:addchild(this.fps_label, 'vertical')
 
-    window.update = function(this, dt)
+    this.fps_label.update = function(this_label, dt)
         local fps = love.timer.getFPS( )
-        fps_label.label = "fps: " .. tostring(fps)
+        this_label.label = "fps: " .. tostring(fps)
     end
-    return window
+    -- return window
+    return this
 end
 
 

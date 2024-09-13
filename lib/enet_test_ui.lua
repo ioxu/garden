@@ -55,7 +55,7 @@ function Enettest.server_panel( pos )
     end
     
     -- test log button
-    this.button_test_log = gspot:button( "test log", {x=4, y=16, w=this.window.pos.w-8, h=unit}, this.window )
+    this.button_test_log = gspot:button( "test log", {x=4, y=this.window.pos.h - unit*2 -4, w=this.window.pos.w-8, h=unit}, this.window )
     this.window:addchild( this.button_test_log, 'vertical' )
     this.button_test_log.click = function (this_button, x, y)
         print("button_test_log_clicked")

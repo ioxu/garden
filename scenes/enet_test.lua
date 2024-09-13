@@ -3,7 +3,7 @@ local EnetTest ={}
 EnetTest.scene_name = "Enet networking components test"
 EnetTest.description = "testing ground for the networking components"
 
-local enettest = require "lib.enettest" -- some utils
+local enet_ui = require "lib.enet_test_ui" -- some utils
 local net = require "lib.network" -- main networking objects
 local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
@@ -30,11 +30,36 @@ local font_large = love.graphics.newFont(40)
 
 ------------------------------------------------------------------------------------------
 -- log panel
-local log_panel = enettest.log_panel({150, 250, 512, 512})
+local log_panel = enet_ui.log_panel({450, 250, 512, 512})
+-- ^ log panel is SLOW
+-- try a faster log:
+
+local log_display = {}
+log_display.log_text = love.graphics.newText( love.graphics.getFont() )
+log_display._line_h = love.graphics.getFont():getHeight()
+log_display._nlines = 0
+
+function log_display.log( text )
+    log_display.log_text:add( tostring(log_display._nlines) .. " : " .. text, x, log_display._line_h * log_display._nlines )
+    log_display._nlines = log_display._nlines + 1
+end
+
+function log_display.draw()
+    local diff = 0.0
+    if log_display._nlines * log_display._line_h > love.graphics.getHeight() then
+        diff = love.graphics.getHeight() - (log_display._nlines * log_display._line_h)
+    end
+    love.graphics.setColor(1,1,1,0.65)
+    love.graphics.push()
+    love.graphics.translate(0.0, diff) 
+    love.graphics.draw( log_display.log_text )
+    love.graphics.pop()
+end
+
 
 ------------------------------------------------------------------------------------------
 -- server panel
-local server_panel = enettest.server_panel()
+local server_panel = enet_ui.server_panel({325,250,100,200})
 local test_log_with_dummy_logs = false
 
 -- signal callbacks
@@ -93,7 +118,7 @@ server_panel.signals:register("port_field_changed", _on_port_field_changed)
 
 ------------------------------------------------------------------------------------------
 -- stats panel
-local stats_panel = enettest.stats_window()
+local stats_panel = enet_ui.stats_window({ 325, 475, 100, 200 })
 
 
 ------------------------------------------------------------------------------------------
@@ -106,8 +131,9 @@ function test_log()
         local rr = rng:random()
         if rr < 0.1 then
             local new_str = string.format("%s:[%s][command][%s]", log_panel.n_lines, os.time(), client_names[rng:random(#client_names)] )
-            log_panel:log( new_str )
+            -- log_panel:log( new_str )
             -- print(new_str)
+            log_display.log( new_str )
         end
     end
 end
@@ -192,7 +218,11 @@ function EnetTest:draw()
     -- love.graphics.setFont( font_small )
     love.graphics.print("[  ] remove cimgui",
                         log_panel.window:getpos().x + log_panel.window:getmaxw() +5,
-                        log_panel.window:getpos().y)
+                        log_panel.window:getpos().y
+    )
+    
+
+    log_display.draw()
 end
 
 ------------------------------------------------------------------------------------------

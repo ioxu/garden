@@ -2,9 +2,24 @@
 -- https://love2d.org/forums/viewtopic.php?t=92877&sid=6a58e932e8ba60eea54d7632acfcdbe0
 -- user pauljessup
 
+
+------------------------------------------------------------------------------------------
+local oldprint = print
+local print_header = "\27[38;5;172m[scene_manager]\27[0m "
+local function print(...)
+    local result = ""
+    for i,v in pairs( {...} ) do
+        result = result .. tostring(v)
+    end
+    oldprint( print_header .. result )
+end
+------------------------------------------------------------------------------------------
+
+
 return{
     states={},
     descriptions={},
+    long_names={},
     focus={},
     action={switch=false, push=false, pop=false, newid=0},
     init=function(self, start_state)
@@ -18,6 +33,11 @@ return{
                     self.descriptions[state_name] = self.states[state_name].description
                 else
                     self.descriptions[state_name] = "--"
+                end
+                if self.states[state_name].scene_name then
+                    self.long_names[state_name] = self.states[state_name].scene_name
+                else
+                    self.long_names[state_name] = "--"
                 end
             end
         end

@@ -1,4 +1,4 @@
-local enettest = require "lib.enettest" -- some utils
+local enet_ui = require "lib.enet_test_ui" -- some utils
 local net = require "lib.network" -- main networking objects
 local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"

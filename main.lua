@@ -2,6 +2,7 @@
 local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
 
+
 os.execute("chcp 65001 > NUL")
 
 print(string.format("LÖVE2D v%i.%i.%i\n%s", love.getVersion()) )
@@ -76,6 +77,19 @@ print("-----------------------------------")
 --     print("-----------------------------------")
 -- end
 ------------------------------------------------------------------------------------------
+local oldprint = print
+local print_header = "\27[38;5;118m[main]\27[0m "
+local function print(...)
+    local result = ""
+    for i,v in pairs( {...} ) do
+        result = result .. tostring(v)
+    end
+    oldprint( print_header .. result )
+end
+------------------------------------------------------------------------------------------
+
+-- scenes and scene selector
+Scenes = require("lib.scene_manager")
 -- gspot scene selector
 local scene_selector_ui = {}
 function new_scene_selector()
@@ -85,9 +99,25 @@ function new_scene_selector()
     this.window = gspot:group("scene selector", {x = love.graphics.getWidth() - w - 16, y = 16, w= w, h = h })
     this.window.drag = true
     this.signals =  signal:new()
+    
+    this.buttons = {}
+    local i = 0
+    for k,v in pairs(Scenes.states) do
+        -- buttons
+        this.buttons[k] = gspot:button( k, {x=4, y=gspot.style.unit + i*20, w=this.window.pos.w-8, h = gspot.style.unit }, this.window )
+        this.buttons[k].tip = Scenes.long_names[k] .. "\n--\n" .. Scenes.descriptions[k]
+        this.window:addchild( this.buttons[k], 'vertical' )
+        this.buttons[k].click = function(this_button, x, y)
+            print(string.format('Scenes selector button "%s" pressed', k))
+            Scenes:switch(k)
+        end
+        i = i +1
+    end
     return this
 end
-scene_selector = new_scene_selector()
+
+local scene_selector = nil
+
 ------------------------------------------------------------------------------------------
 love.window.setTitle("garden")
 io.stdout:setvbuf("no")
@@ -99,7 +129,7 @@ local font_small = love.graphics.newFont(10)
 -- scenes
 -- Scenes = {}
 -- Scenes["quadtree_main"] = require"quadtree_main"
-Scenes = require("lib.scene_manager")
+
 
 
 
@@ -113,12 +143,14 @@ function love.load()
     
     -- Scenes:init("circles_around_circles")--"enet_test") --"circles_around_circles")--"quadtree_main" )
     Scenes:init("enet_test")
-
+    scene_selector = new_scene_selector()
     -- graphics
     love.graphics.setLineStyle("rough")
 
-    love.profiler = require('lib.profile.profile') 
-    love.profiler.start()
+    if PROFILE then
+        love.profiler = require('lib.profile.profile') 
+        love.profiler.start()
+    end
 end
 
 

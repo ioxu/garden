@@ -29,10 +29,6 @@ local font_small = love.graphics.newFont(10)
 local font_large = love.graphics.newFont(40)
 
 ------------------------------------------------------------------------------------------
--- stats panel
-local stats_panel = enettest.stats_window()
-
-------------------------------------------------------------------------------------------
 -- log panel
 local log_panel = enettest.log_panel({150, 250, 512, 512})
 
@@ -60,8 +56,6 @@ function _on_start_server_button_pressed()
     server.address = server_panel.found_address.label
 
     if server.host == nil then
-        print(":: ", server_panel.found_address.label, " ", tonumber(server_panel.port))
-
         server:start()
         if server.host then
             log_panel:log(string.format("[server started at %s]",tostring(server)))
@@ -98,6 +92,11 @@ server_panel.signals:register("button_test_log_clicked", _on_test_log_button_pre
 server_panel.signals:register("port_field_changed", _on_port_field_changed)
 
 ------------------------------------------------------------------------------------------
+-- stats panel
+local stats_panel = enettest.stats_window()
+
+
+------------------------------------------------------------------------------------------
 -- dummy logging
 local rng = love.math.newRandomGenerator()
 rng:setSeed( os.time() )
@@ -108,6 +107,7 @@ function test_log()
         if rr < 0.1 then
             local new_str = string.format("%s:[%s][command][%s]", log_panel.n_lines, os.time(), client_names[rng:random(#client_names)] )
             log_panel:log( new_str )
+            -- print(new_str)
         end
     end
 end

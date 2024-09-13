@@ -149,20 +149,20 @@ function Enettest.log_panel(pos)
     end
 
     -- love callbacks
-    this.scrollgroup.update = function( this_scrollg, dt )
-        -- print("this.scrollgroup.update")
-    end
+    -- this.scrollgroup.update = function( this_scrollg, dt )
+    --     -- print("this.scrollgroup.update")
+    -- end
 
     return this
 end
 
 local stats_panel_table = {}
-function Enettest.stats_window()
+function Enettest.stats_window( pos )
     local this = stats_panel_table
-    this.window = gspot:group("stats", {700,300,100,200})
+    local pos = pos or { 25, 475, 100, 200 }
+    this.window = gspot:group("stats", pos)
     this.window.drag = true
 
-    -- scrollgroup = gspot:scrollgroup("scrollgroup", {})
 
     this.fps_label = gspot:text( 'fps', {w = this.window.pos.w}, this.window )
     this.window:addchild(this.fps_label, 'vertical')
@@ -171,7 +171,7 @@ function Enettest.stats_window()
         local fps = love.timer.getFPS( )
         this_label.label = "fps: " .. tostring(fps)
     end
-    -- return window
+
     return this
 end
 

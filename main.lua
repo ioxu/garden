@@ -22,6 +22,7 @@ print("-----------------------------------\ncli:")
 -- lua-local-debugger for VSCode: https://github.com/tomblind/local-lua-debugger-vscode
 lldebugger = nil
 local DEBUG_MODE = false
+local PROFILE = false
 for k,v in pairs(arg) do
     print(v)
     if v == "debug" then
@@ -103,7 +104,8 @@ Scenes = require("lib.scene_manager")
 
 
 ------------------------------------------------------------------------------------------
-local gloabl_time = 0
+local global_time = 0
+local global_frame = 0
 
 function love.load()
     imgui.love.Init()
@@ -114,6 +116,9 @@ function love.load()
 
     -- graphics
     love.graphics.setLineStyle("rough")
+
+    love.profiler = require('lib.profile.profile') 
+    love.profiler.start()
 end
 
 
@@ -157,13 +162,25 @@ function love.draw()
         love.graphics.print( "DEBUG", love.graphics.getWidth() /2 - 35, 20 )
         love.graphics.setFont(font_small)
         love.graphics.print( "(ctrl-F4 to breakpoint)", love.graphics.getWidth() /2 - 53, 44 )
+        
+        -- profiler
+        --love.graphics.print(love.report or "Please wait...")
     end
-
+    if PROFILE then
+        print(love.report)
+    end
 end
 
 
 function love.update(dt)
-    gloabl_time = gloabl_time + dt
+    global_time = global_time + dt
+    global_frame = global_frame + 1
+
+
+    if PROFILE and global_frame%100 == 0 then
+        love.report = love.profiler.report(20)
+        love.profiler.reset()
+    end
 
     Scenes:update(dt)
     

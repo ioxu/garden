@@ -98,6 +98,7 @@ function love.load()
     
     Scenes:init("enet_test")
     scene_selector = new_scene_selector()
+
     -- graphics
     love.graphics.setLineStyle("rough")
 

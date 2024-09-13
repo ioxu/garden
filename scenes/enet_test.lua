@@ -5,7 +5,7 @@ EnetTest.description = "testing ground for the networking components"
 
 local enet_ui = require "lib.enet_test_ui" -- some utils
 local net = require "lib.network" -- main networking objects
-local gspot = require "lib.gspot.Gspot"
+-- local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
 
 ------------------------------------------------------------------------------------------
@@ -39,10 +39,12 @@ log_display.log_text = love.graphics.newText( love.graphics.getFont() )
 log_display._line_h = love.graphics.getFont():getHeight()
 log_display._nlines = 0
 
+
 function log_display.log( text )
     log_display.log_text:add( tostring(log_display._nlines) .. " : " .. text, x, log_display._line_h * log_display._nlines )
     log_display._nlines = log_display._nlines + 1
 end
+
 
 function log_display.draw()
     local diff = 0.0
@@ -61,6 +63,7 @@ end
 -- server panel
 local server_panel = enet_ui.server_panel({325,250,100,200})
 local test_log_with_dummy_logs = false
+
 
 -- signal callbacks
 function _on_test_log_button_pressed()
@@ -120,7 +123,6 @@ server_panel.signals:register("port_field_changed", _on_port_field_changed)
 -- stats panel
 local stats_panel = enet_ui.stats_window({ 325, 475, 100, 200 })
 
-
 ------------------------------------------------------------------------------------------
 -- dummy logging
 local rng = love.math.newRandomGenerator()
@@ -162,16 +164,13 @@ server.signals:register("received", _on_peer_received)
 function EnetTest:init()
     --- scene_manager callback
     log_panel:log( "[log begin]" )
-    -- server = net.Server:new( "test_server", "127.0.0.1", 6789 )
-    -- server = net.Server:new( "test_server", "192.168.1.103", 6789 )
-    -- server = net.Server:new( "test_server" )
     print(string.format("server: %s", server))
 end
 
 function EnetTest:defocus()
     --- scene_manager callback
     print(":defocus()")
-    -- hide these GUIs
+    -- hide these GUIs    
     server_panel.window:hide()
     log_panel.window:hide()
     stats_panel.window:hide()
@@ -193,7 +192,6 @@ function EnetTest:update(dt)
     --- scene_manager callback
     test_log()
     server:update()
-    gspot:update(dt)
 end
 
 
@@ -205,55 +203,39 @@ function EnetTest:draw()
 
     love.graphics.setColor(0.4,0.4,0.4,1.0)
     love.graphics.setFont(font_large)
+    
     if server.host then
         love.graphics.print(string.format("server started %s",tostring(server)), 32, 32)
     else        
         love.graphics.print("server stopped", 32, 32)
     end
-
-    gspot:draw()
-
-    love.graphics.setFont(font_small)
-    love.graphics.setColor(1,.3,.3,1)
-    -- love.graphics.setFont( font_small )
-    love.graphics.print("[  ] remove cimgui",
-                        log_panel.window:getpos().x + log_panel.window:getmaxw() +5,
-                        log_panel.window:getpos().y
-    )
     
-
     log_display.draw()
 end
 
 ------------------------------------------------------------------------------------------
 
 function EnetTest:keypressed(key, code, isrepeat)
-	if gspot.focus then
-		gspot:keypress(key) -- only sending input to the gui if we're not using it for something else
-	else
-		gspot:feedback(key) -- why not
-	end
+	--
 end
 
 function EnetTest:textinput(t)
-	if gspot.focus then
-		gspot:textinput(t) -- only sending input to the gui if we're not using it for something else
-	end
+	--
 end
 
 
 function EnetTest:mousepressed (x, y, button)
-	gspot:mousepress(x, y, button) -- pretty sure you want to register mouse events
+    --
 end
 
 
 function EnetTest:mousereleased(x, y, button)
-	gspot:mouserelease(x, y, button)
+	--
 end
 
 
 function EnetTest:wheelmoved(x, y)
-	gspot:mousewheel(x, y)
+    -- 
 end
 
 

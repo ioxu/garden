@@ -435,6 +435,7 @@ end
 
 
 function Circles:mousepressed( x, y, button, istouch, presses )
+    print("Circles:mousepressed")
     for k,w in pairs(widgets) do
         w:mousepressed(x,y,button,istouch,presses)
     end

@@ -9,7 +9,7 @@ local unit = gspot.style.unit
 
 ------------------------------------------------------------------------------------------
 local oldprint = print
-local print_header = "\27[38;5;221m[enet_test\27[38;5;80m.lib\27[38;5;221m]\27[0m "
+local print_header = "\27[38;5;221m[enet_test_ui\27[38;5;80m.lib\27[38;5;221m]\27[0m "
 local function print(...)
     local result = ""
     for i,v in pairs( {...} ) do
@@ -17,9 +17,9 @@ local function print(...)
     end
     oldprint( print_header .. result )
 end
+
+
 ------------------------------------------------------------------------------------------
-
-
 local server_panel_table = {}
 function Enettest.server_panel( pos )
     local this = server_panel_table
@@ -28,14 +28,19 @@ function Enettest.server_panel( pos )
     this.window.drag = true
     this.signals = signal:new()
     -- this.window.style.bg = {0.42, 0.275, 0.192,1}--{ 1.0,0.5,0.0,1.0 }
-
+    
+    this.found_address = gspot:text( "no connection", {x=10, y=0, w=this.window.pos.w-8, h=unit}, this.window )
     local found_IPv4_address = net.get_ip_info()
-    print("found_IPv4_address", found_IPv4_address)
-    this.found_address = gspot:text( found_IPv4_address, {x=10, y=0, w=this.window.pos.w-8, h=unit}, this.window )
+    if found_IPv4_address then
+        print("found_IPv4_address", found_IPv4_address)
+        this.found_address.label = found_IPv4_address
+    else
+        print("could not determine network connection")
+    end
     
     this.found_address.style.fg = {0.6,0.6,0.6,1.0}
     this.window:addchild( this.found_address, 'vertical')
-
+    
     this.port = "6789"
     this.port_input = gspot:input("port", {x=32, w=this.window.pos.w -32 -4 ,  h= unit}, this.window, this.port)
     this.port_input.keyrepeat = true
@@ -45,7 +50,7 @@ function Enettest.server_panel( pos )
         this.port = this_input.value
         this.signals:emit( "port_field_changed", this.port)
     end
-
+    
     -- start evrer button
     this.button_start = gspot:button("start", {x=4, y=unit/2, w=this.window.pos.w-8, h=unit}, this.window  )
     this.window:addchild( this.button_start, 'vertical' )
@@ -61,18 +66,64 @@ function Enettest.server_panel( pos )
         print("button_test_log_clicked")
         this.signals:emit("button_test_log_clicked")
     end
-
+    
     return this
 end
 
 
+------------------------------------------------------------------------------------------
+
+local peer_list_panel_table = {}
+
+
+function Enettest.peer_list_panel(pos)
+    local this = peer_list_panel_table
+    pos = pos or {450, 350, 512, 512}
+    this.window = gspot:group("Peers", pos)
+    this.window.drag = true
+    
+    this.peers = {}
+    this.peers_list_group = gspot:group( "", {x=4,y=unit +4, w=this.window.pos.w-8, h=this.window.pos.h-unit-8 }, this.window )
+    this.peers_list_group.style.bg = {0.2,0.2,0.2,1}
+    -- this.peers_list_group.style.labelfg = {0,0,0,0}
+    -- this.window:addchild( this.peers_list_group, 'vertical' )
+
+    this.update_peers_list = function( server )
+        print(string.format("updating peers list"))
+        
+        local _clear = {}
+
+        for k,v in pairs( this.peers ) do
+            _clear[k] = v
+        end
+        for k,v in pairs(_clear) do
+            this.peers_list_group:remchild(v)
+            gspot:rem(v)
+            this.peers[k] = nil
+        end
+
+        local i = 0
+        for k,v in pairs(server.clients) do
+            print(string.format("  server.clients[%s]: %s",k, server.clients[k]) )
+            this.peers[k] = gspot:button( tostring(v), {x=4, y=4 + (unit*2 + 4)*i , w=this.peers_list_group.pos.w-8, h=unit *2}, this.peers_list_group )
+            this.peers[k].style.bg = {0.3,0.3,0.3,1}
+            i = i +1
+        end
+    end
+    
+    return this
+end
+
+
+------------------------------------------------------------------------------------------
+-- REDUNDANT
 local log_panel_table = {}
 function Enettest.log_panel(pos)
     local this = log_panel_table
     pos = pos or {150, 250, 512, 512}
     this.window = gspot:group('Log', pos)
     this.window.drag = true
-
+    
     this.log_text = ""
     this.n_lines = 0
     this.autoscroll = true

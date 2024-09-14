@@ -9,7 +9,7 @@ local net = require "lib.network" -- main networking objects
 local signal = require "lib.signal"
 
 ------------------------------------------------------------------------------------------
-local server = net.Server:new()
+local server = net.Server:new("The Garden")
 
 ------------------------------------------------------------------------------------------
 local oldprint = print
@@ -124,6 +124,10 @@ server_panel.signals:register("button_test_log_clicked", _on_test_log_button_pre
 server_panel.signals:register("port_field_changed", _on_port_field_changed)
 
 ------------------------------------------------------------------------------------------
+-- peers panel
+local peers_panel = enet_ui.peer_list_panel( )
+
+------------------------------------------------------------------------------------------
 -- stats panel
 local stats_panel = enet_ui.stats_window({ 325, 475, 100, 200 })
 
@@ -136,7 +140,8 @@ function test_log()
     if test_log_with_dummy_logs then
         local rr = rng:random()
         if rr < 0.1 then
-            local new_str = string.format("%s:[%s][command][%s]", log_panel.n_lines, os.time(), client_names[rng:random(#client_names)] )
+            -- local new_str = string.format("%s:[%s][command][%s]", log_panel.n_lines, os.time(), client_names[rng:random(#client_names)] )
+            local new_str = string.format("%s:[%s][command][%s]", log_display._n_lines, os.time(), client_names[rng:random(#client_names)] )
             -- log_panel:log( new_str )
             -- print(new_str)
             log_display.log( new_str )
@@ -151,11 +156,14 @@ end
 function _on_peer_connected(peer)
     -- log_panel:log( string.format("[peer connected] %s (index: %s, id: %s )", peer, peer:index(), peer:connect_id()) )
     log_display.log( string.format("[peer connected] %s (index: %s, id: %s )", peer, peer:index(), peer:connect_id()) )
+    print("adding peer to the peers_panel")
+    peers_panel.update_peers_list( server )
 end
 
 function _on_peer_disconnected( peer )
     -- log_panel:log( string.format("[peer disconnected] %s", peer) )
     log_display.log( string.format("[peer disconnected] %s", peer) )
+    peers_panel.update_peers_list( server )
 end
 
 function _on_peer_received( message, peer )
@@ -211,8 +219,8 @@ function EnetTest:draw()
 
     love.graphics.setColor(0.4,0.4,0.4,1.0)
     love.graphics.setFont(font_medium)
-    local server_text_pos = {x = server_panel.window.pos.x + server_panel.window.pos.w + 6,
-                            y = server_panel.window.pos.y -4
+    local server_text_pos = {x = server_panel.window.pos.x,
+                            y = server_panel.window.pos.y - font_medium:getHeight() - 4
     }
     if server.host then
         love.graphics.print(string.format("server started %s",tostring(server)), server_text_pos.x , server_text_pos.y)

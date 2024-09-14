@@ -134,7 +134,7 @@ end
 
 
 function Network.Server.__tostring( self )
-    return string.format("%s@%s:%s", self.name, self.address, tostring(self.port))
+    return string.format("'%s'@%s:%s", self.name, self.address, tostring(self.port))
 end
 
 ------------------------------------

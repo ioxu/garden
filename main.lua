@@ -46,7 +46,7 @@ print("DEBUG_MODE ", DEBUG_MODE)
 
 ------------------------------------------------------------------------------------------
 local oldprint = print
-local print_header = "\27[38;5;118m[main]\27[0m "
+local print_header = "\27[38;5;252m[main]\27[0m "
 local function print(...)
     local result = ""
     for i,v in pairs( {...} ) do
@@ -224,7 +224,8 @@ end
 
 
 love.quit = function()
-    --
+    print("quit")
+    Scenes:quit()
 end
 
 

@@ -21,8 +21,10 @@ local EnetClientTest = {}
 local client = net.Client:new("Benny")
 
 local main_menu = client_ui.main_menu()
+main_menu.window:hide()
 
 function EnetClientTest:init()
+    main_menu.window:show()
     print("EnetClientTest:init")
     print("client", client)
     client:connect( net.get_ip_info(), 6789)
@@ -42,6 +44,14 @@ function EnetClientTest:init()
     end
 end
 
+function EnetClientTest:focus()
+    main_menu.window:show()
+end
+
+
+function EnetClientTest:defocus()
+    main_menu.window:hide()
+end
 
 function EnetClientTest:update(dt)
     -- print("EnetClientTest:update")

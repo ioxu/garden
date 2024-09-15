@@ -269,5 +269,10 @@ function EnetTest:wheelmoved(x, y)
 end
 
 
+function EnetTest:quit()
+    print("cleaning up connections")
+    server:stop()
+end
+
 ------------------------------------------------------------------------------------------
 return EnetTest

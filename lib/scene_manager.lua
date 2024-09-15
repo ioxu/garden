@@ -143,5 +143,20 @@ return{
                 self.states[v]:textinput( t )
             end
         end
+    end,
+
+    quit=function(self)
+        -- TODO: this should probably loop through all scenes
+        -- for i,v in pairs( self.focus) do
+        --     if self.states[v].quit then
+        --         self.states[v]:quit( )
+        --     end
+        -- end
+        for i,v in pairs( self.states ) do
+            if self.states[i].quit then
+                self.states[i]:quit()
+            end
+        end
     end
+
 }

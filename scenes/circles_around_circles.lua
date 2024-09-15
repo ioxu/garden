@@ -7,6 +7,18 @@ local handles = require"lib.handles"
 local signal = require"lib.signal"
 math.tau = 2*math.pi
 
+------------------------------------------------------------------------------------------
+local oldprint = print
+local print_header = "\27[38;5;175m[circles_around_circles\27[38;5;80m.scene\27[38;5;175m]\27[0m "
+local function print(...)
+    local result = ""
+    for i,v in pairs( {...} ) do
+        result = result .. tostring(v)
+    end
+    oldprint( print_header .. result )
+end
+------------------------------------------------------------------------------------------
+
 local Circles = {}
 Circles.scene_name = "circles_around_circles"
 Circles.description = "how to place circles around the circumference of a circle\nwith each circle touching their neighbours\nas well as the center circle"
@@ -461,6 +473,11 @@ function Circles:keypressed( key, code, isrepeat )
     if code == "space" then
         is_paused = not is_paused
     end
+end
+
+
+function Circles:quit()
+    print("cleaning up circles")
 end
 
 

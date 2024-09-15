@@ -166,11 +166,12 @@ function Network.Client:update(dt)
         local event = self.host:service()
         if event then
             self.received_data = true
-            print("----")
-            for k, v in pairs(event) do
-                print(k,v)
-            end
-            event.peer:send("miow")
+            self.peer = event.peer
+            -- print("----")
+            -- for k, v in pairs(event) do
+            --     print(k,v)
+            -- end
+            -- event.peer:send("miow")
         end
     end
 end

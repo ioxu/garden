@@ -23,6 +23,7 @@ function client_ui.main_menu()
 
     this.STATUS_READY_TO_CONNECT = 1
     this.STATUS_NOT_READY_TO_CONNECT = 2
+    this.STATUS_IS_CONNECTED = 3
     this.status = this.STATUS_NOT_READY_TO_CONNECT
     
     this.window = gspot:group("main menu",{x=500,y=500, w=256,h=128})
@@ -57,7 +58,7 @@ function client_ui.main_menu()
         if this.status == this.STATUS_READY_TO_CONNECT then
             print("CONNECTING")
             this.signals:emit("connect_attempted")
-        else
+        elseif this.status == this.STATUS_NOT_READY_TO_CONNECT then
             print("cannot connect, check settings")
         end
     end
@@ -74,6 +75,14 @@ function client_ui.main_menu()
             this.button_connect.style.hilite = {0.2,0.65,0.2,1.0}
             this.button_connect.style.focus = {0.3,0.75,0.3,1.0}
         end
+    end
+
+    this.announce_connected = function()
+        print("announce_connected()")
+        this.status = this.STATUS_IS_CONNECTED
+        this.button_connect.label = "CONNECTED"
+        this.button_connect.style.hilite = {0.65,0.55,0.2,1.0}
+        this.button_connect.style.focus = {0.75,0.65,0.3,1.0}
     end
 
     print('this.nickname.value ~= ""', (this.nickname.value ~= "") )

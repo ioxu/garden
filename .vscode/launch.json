@@ -32,7 +32,19 @@
             ],
           },
 
-
+          {
+            "name": "Debug Garden client mode",
+            "type": "lua-local",
+            "request": "launch",
+            "program": {
+              "command": "lovec"
+            },
+            "args": [
+              ".",
+              "debug",
+              "client"
+            ],
+          },
 
         {
             "name": "Debug Lua Interpreter",

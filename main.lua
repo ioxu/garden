@@ -24,6 +24,7 @@ print("-----------------------------------\ncli:")
 lldebugger = nil
 local DEBUG_MODE = false
 local PROFILE = false
+local CLIENT_MODE = false
 for k,v in pairs(arg) do
     print(v)
     if v == "debug" then
@@ -34,6 +35,10 @@ for k,v in pairs(arg) do
         else
             print("lldebugger unavailable")
         end
+    end
+    if v == "client" then
+        -- stry to switch scenes straight into the client interface
+        CLIENT_MODE = true
     end
 end
 
@@ -96,8 +101,15 @@ function love.load()
     -- imgui.love.Init()
     love.mouse.setVisible( false )
     
-    Scenes:init("enet_test")
+    if CLIENT_MODE then
+        Scenes:init("enet_client_test")
+    else
+        Scenes:init("enet_test")
+    end
     scene_selector = new_scene_selector()
+    if CLIENT_MODE then
+        scene_selector.window:hide()
+    end
 
     -- graphics
     love.graphics.setLineStyle("rough")

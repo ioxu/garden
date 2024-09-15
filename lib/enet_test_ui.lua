@@ -51,7 +51,7 @@ function Enettest.server_panel( pos )
         this.signals:emit( "port_field_changed", this.port)
     end
     
-    -- start evrer button
+    -- start sevrer button
     this.button_start = gspot:button("start", {x=4, y=unit/2, w=this.window.pos.w-8, h=unit}, this.window  )
     this.window:addchild( this.button_start, 'vertical' )
     this.button_start.click = function (this_button, x, y)
@@ -59,6 +59,15 @@ function Enettest.server_panel( pos )
         this.signals:emit( "button_start_clicked" )
     end
     
+    -- clear log button
+    -- this.button_clear_log = gspot:button( "clear log", {x=4, y=unit/2, w=this.window.pos.w-8, h=unit}, this.window )
+    this.button_clear_log = gspot:button( "clear log", {x=4, y=this.window.pos.h - unit*3 -4, w=this.window.pos.w-8, h=unit}, this.window )
+    this.window:addchild( this.button_clear_log, 'vertical' )
+    this.button_clear_log.click = function (this_button, x, y)
+        print("button_clear_log clicked")
+        this.signals:emit( "button_clear_log_clicked" )
+    end
+
     -- test log button
     this.button_test_log = gspot:button( "test log", {x=4, y=this.window.pos.h - unit*2 -4, w=this.window.pos.w-8, h=unit}, this.window )
     this.window:addchild( this.button_test_log, 'vertical' )
@@ -106,6 +115,7 @@ function Enettest.peer_list_panel(pos)
         for k,v in pairs(server.clients) do
             print(string.format("  server.clients[%s]: %s",k, server.clients[k]) )
             this.peers[k] = gspot:button( tostring(v), {x=4, y=4 + (unit*2 + 4)*i , w=this.peers_list_group.pos.w-8, h=unit *2}, this.peers_list_group )
+            -- this.peers[k] = gspot:group( tostring(v), {x=4, y=4 + (unit*2 + 4)*i , w=this.peers_list_group.pos.w-8, h=unit *2}, this.peers_list_group )
             this.peers[k].style.bg = {0.3,0.3,0.3,1}
             i = i +1
         end
@@ -217,10 +227,17 @@ function Enettest.stats_window( pos )
 
     this.fps_label = gspot:text( 'fps', {w = this.window.pos.w}, this.window )
     this.window:addchild(this.fps_label, 'vertical')
-
     this.fps_label.update = function(this_label, dt)
         local fps = love.timer.getFPS( )
         this_label.label = "fps: " .. tostring(fps)
+    end
+
+    this.server_connections_label = gspot:text("server connections", {w = this.window.pos.w}, this.window)
+    this.window:addchild( this.server_connections_label, 'vertical' )
+
+    this.update_connections = function( server )
+        print("update_connections")
+        this.server_connections_label.label = string.format( "connections: %d", #server.clients )
     end
 
     return this

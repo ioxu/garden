@@ -43,7 +43,7 @@ log_display._nlines = 0
 
 
 function log_display.log( text )
-    log_display.log_text:add( tostring(log_display._nlines) .. " : " .. text, x, log_display._line_h * log_display._nlines )
+    log_display.log_text:add( string.format("%05s", log_display._nlines) .. " : " .. text, x, log_display._line_h * log_display._nlines )
     log_display._nlines = log_display._nlines + 1
 end
 
@@ -64,6 +64,7 @@ end
 ------------------------------------------------------------------------------------------
 -- server panel
 local server_panel = enet_ui.server_panel({325,250,100,200})
+server_panel.window:hide()
 local test_log_with_dummy_logs = false
 
 
@@ -119,17 +120,25 @@ function _on_port_field_changed( new_port_value)
     server.port = tonumber(new_port_value)
 end
 
+function _on_clear_log_button_pressed(  )
+    log_display.log_text:clear()
+    log_display.log("[log cleared]")
+end
+
 server_panel.signals:register("button_start_clicked", _on_start_server_button_pressed)
+server_panel.signals:register("button_clear_log_clicked", _on_clear_log_button_pressed)
 server_panel.signals:register("button_test_log_clicked", _on_test_log_button_pressed)
 server_panel.signals:register("port_field_changed", _on_port_field_changed)
 
 ------------------------------------------------------------------------------------------
 -- peers panel
 local peers_panel = enet_ui.peer_list_panel( )
+peers_panel.window:hide()
 
 ------------------------------------------------------------------------------------------
 -- stats panel
 local stats_panel = enet_ui.stats_window({ 325, 475, 100, 200 })
+stats_panel.window:hide()
 
 ------------------------------------------------------------------------------------------
 -- dummy logging
@@ -150,7 +159,6 @@ function test_log()
 end
 
 
-
 ------------------------------------------------------------------------------------------
 --- server callbacks
 function _on_peer_connected(peer)
@@ -158,12 +166,14 @@ function _on_peer_connected(peer)
     log_display.log( string.format("[peer connected] %s (index: %s, id: %s )", peer, peer:index(), peer:connect_id()) )
     print("adding peer to the peers_panel")
     peers_panel.update_peers_list( server )
+    stats_panel.update_connections( server )
 end
 
 function _on_peer_disconnected( peer )
     -- log_panel:log( string.format("[peer disconnected] %s", peer) )
     log_display.log( string.format("[peer disconnected] %s", peer) )
     peers_panel.update_peers_list( server )
+    stats_panel.update_connections( server )
 end
 
 function _on_peer_received( message, peer )
@@ -190,6 +200,7 @@ function EnetTest:defocus()
     server_panel.window:hide()
     -- log_panel.window:hide()
     stats_panel.window:hide()
+    peers_panel.window:hide()
 end
 
 
@@ -201,6 +212,7 @@ function EnetTest:focus()
     server_panel.window:show()
     -- log_panel.window:show()
     stats_panel.window:show()
+    peers_panel.window:show()
 end
 
 

@@ -7,6 +7,7 @@ local enet_ui = require "lib.enet_test_ui" -- some utils
 local net = require "lib.network" -- main networking objects
 -- local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
+local log_ui = require "lib.log_ui"
 
 ------------------------------------------------------------------------------------------
 local server = net.Server:new("The Garden")
@@ -32,34 +33,7 @@ local font_large = love.graphics.newFont(40)
 
 ------------------------------------------------------------------------------------------
 -- log panel
--- local log_panel = enet_ui.log_panel({450, 250, 512, 512})
--- ^ log panel is SLOW
--- try a faster log:
-
-local log_display = {}
-log_display.log_text = love.graphics.newText( font_mono_small ) -- love.graphics.getFont() )
-log_display._line_h = love.graphics.getFont():getHeight()
-log_display._nlines = 0
-
-
-function log_display.log( text )
-    log_display.log_text:add( string.format("%05s", log_display._nlines) .. " : " .. text, x, log_display._line_h * log_display._nlines )
-    log_display._nlines = log_display._nlines + 1
-end
-
-
-function log_display.draw()
-    local diff = 0.0
-    if log_display._nlines * log_display._line_h > love.graphics.getHeight() then
-        diff = love.graphics.getHeight() - (log_display._nlines * log_display._line_h)
-    end
-    love.graphics.setColor(1,1,1,0.65)
-    love.graphics.push()
-    love.graphics.translate(0.0, diff) 
-    love.graphics.draw( log_display.log_text )
-    love.graphics.pop()
-end
-
+local log_display = log_ui:new("server log display")
 
 ------------------------------------------------------------------------------------------
 -- server panel
@@ -88,13 +62,13 @@ function _on_start_server_button_pressed()
         server:start()
         if server.host then
             -- log_panel:log(string.format("[server started at %s]",tostring(server)))
-            log_display.log(string.format("[server started at %s]",tostring(server)))
+            log_display:log(string.format("[server started at %s]",tostring(server)))
             server_panel.button_start.label = "started"
             server_panel.button_start.style.hilite = {0.1,0.55,0.1,1.0}
             server_panel.button_start.style.focus = {0.4,1.0,0.4,1.0}    
         else
             -- log_panel:log(string.format("[failed to start server at %s]",tostring(server)))
-            log_display.log(string.format("[failed to start server at %s]",tostring(server)))
+            log_display:log(string.format("[failed to start server at %s]",tostring(server)))
         end
     elseif server.host then
         if server.host then
@@ -104,10 +78,10 @@ function _on_start_server_button_pressed()
                 server_panel.button_start.style.hilite = {1.0,0.2,0.2,1.0}
                 server_panel.button_start.style.focus = {1.0,0.4,0.4,1.0}        
                 -- log_panel:log(string.format("[stoppped server at %s]",tostring(server)))
-                log_display.log(string.format("[stopped server at %s]",tostring(server)))
+                log_display:log(string.format("[stopped server at %s]",tostring(server)))
             else
                 -- log_panel:log(string.format("[failed to stop server at %s]",tostring(server)))
-                log_display.log(string.format("[failed to stop server at %s]",tostring(server)))
+                log_display:log(string.format("[failed to stop server at %s]",tostring(server)))
             end
         end
     end
@@ -121,8 +95,9 @@ function _on_port_field_changed( new_port_value)
 end
 
 function _on_clear_log_button_pressed(  )
-    log_display.log_text:clear()
-    log_display.log("[log cleared]")
+    -- log_display:log_text:clear()
+    log_display:clear()
+    log_display:log("[log cleared]")
 end
 
 server_panel.signals:register("button_start_clicked", _on_start_server_button_pressed)
@@ -149,11 +124,8 @@ function test_log()
     if test_log_with_dummy_logs then
         local rr = rng:random()
         if rr < 0.1 then
-            -- local new_str = string.format("%s:[%s][command][%s]", log_panel.n_lines, os.time(), client_names[rng:random(#client_names)] )
-            local new_str = string.format("%s:[%s][command][%s]", log_display._n_lines, os.time(), client_names[rng:random(#client_names)] )
-            -- log_panel:log( new_str )
-            -- print(new_str)
-            log_display.log( new_str )
+            local new_str = string.format("[%s][command][%s]", os.date("%H:%M:%S", os.time()+30600), client_names[rng:random(#client_names)] )
+            log_display:log( new_str )
         end
     end
 end
@@ -163,7 +135,7 @@ end
 --- server callbacks
 function _on_peer_connected(peer)
     -- log_panel:log( string.format("[peer connected] %s (index: %s, id: %s )", peer, peer:index(), peer:connect_id()) )
-    log_display.log( string.format("[peer connected] %s (index: %s, id: %s )", peer, peer:index(), peer:connect_id()) )
+    log_display:log( string.format("[peer connected] %s (index: %s, id: %s )", peer, peer:index(), peer:connect_id()) )
     print("adding peer to the peers_panel")
     peers_panel.update_peers_list( server )
     stats_panel.update_connections( server )
@@ -171,14 +143,14 @@ end
 
 function _on_peer_disconnected( peer )
     -- log_panel:log( string.format("[peer disconnected] %s", peer) )
-    log_display.log( string.format("[peer disconnected] %s", peer) )
+    log_display:log( string.format("[peer disconnected] %s", peer) )
     peers_panel.update_peers_list( server )
     stats_panel.update_connections( server )
 end
 
 function _on_peer_received( message, peer )
     -- log_panel:log( string.format("[received] %s '%s'", peer, message) )
-    log_display.log( string.format("[received] %s '%s'", peer, message) )
+    log_display:log( string.format("[received] %s '%s'", peer, message) )
 end
 
 server.signals:register("connected", _on_peer_connected)
@@ -189,7 +161,7 @@ server.signals:register("received", _on_peer_received)
 function EnetTest:init()
     --- scene_manager callback
     -- log_panel:log( "[log begin]" )
-    log_display.log("[log begin]")
+    log_display:log("[log begin]")
     print(string.format("server: %s", server))
 end
 
@@ -240,7 +212,7 @@ function EnetTest:draw()
         love.graphics.print("server stopped", server_text_pos.x , server_text_pos.y)
     end
     
-    log_display.draw()
+    log_display:draw()
 end
 
 ------------------------------------------------------------------------------------------

@@ -29,9 +29,9 @@ Network = {}
 Network.Server = {}
 
 --- Base server type
---- @param name string arbitrary name
---- @param address string IPv4 address
---- @param port number port number
+--- @param name? string arbitrary name
+--- @param address? string IPv4 address
+--- @param port? number port number
 function Network.Server:new( name, address, port )
     Network.Server.__index = Network.Server
     local self = setmetatable({}, Network.Server)
@@ -147,6 +147,7 @@ function Network.Client:new(name)
     self.host = enet.host_create()
     self.peer = nil
     self.received_data = nil
+    self.signals = signal:new()
     return self
 end
 
@@ -167,11 +168,21 @@ function Network.Client:update(dt)
         if event then
             self.received_data = true
             self.peer = event.peer
-            -- print("----")
-            -- for k, v in pairs(event) do
-            --     print(k,v)
-            -- end
-            -- event.peer:send("miow")
+            print("----")
+            for k, v in pairs(event) do
+                print(string.format("%s %s",k,v) )
+            end
+            -- print( string.format("data: %s",event.data) )
+            event.peer:send("miow")
+
+
+            if event.type == "connect" then
+                self.signals:emit("connected", event)
+            elseif event.type == "receive" then
+                self.signals:emit("received", event)
+            elseif event.type == "disconnect" then
+                self.signals:emit("disconnected", event)
+            end
         end
     end
 end

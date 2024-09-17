@@ -22,6 +22,10 @@ local log_panel = log_ui:new("client log panel")
 local EnetClientTest = {}
 local client = net.Client:new("Benny")
 
+local main_menu = client_ui.main_menu()
+main_menu.window:hide()
+
+
 function _on_connected( event )
     log_panel:log(string.format("connect event: %s", event))
 end
@@ -32,15 +36,13 @@ end
 
 function _on_disconnected( event )
     log_panel:log(string.format("disconnected: '%s'", event.data))
+    main_menu.announce_disconnected()
 end
-
 
 client.signals:register("connected", _on_connected)
 client.signals:register("received", _on_received)
 client.signals:register("disconnected", _on_disconnected)
 
-local main_menu = client_ui.main_menu()
-main_menu.window:hide()
 
 local function _on_connect_attempted()
     print("attempting connecion")

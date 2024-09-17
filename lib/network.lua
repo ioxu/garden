@@ -67,14 +67,18 @@ end
 
 function Network.Server:stop()
     print(string.format("%s stopping", self))
-    ----------------------------
-    --- TDO need to loop through all peers?
-    ----------------------------
     if self.peer then
         print(string.format("  disconnect peer %s", peer))
         self.peer:disconnect_now()
         self.peer = nil
     end
+    -- to be sure
+    for client_index,client in pairs(self.clients) do
+        client:disconnect_now()
+    end
+    -- scrub list
+    self.clients = {}
+
     self.host = nil
     self.received_data = false
 end

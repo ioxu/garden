@@ -40,7 +40,15 @@ local log_display = log_ui:new("server log display")
 local server_panel = enet_ui.server_panel({325,250,100,200})
 server_panel.window:hide()
 local test_log_with_dummy_logs = false
+------------------------------------------------------------------------------------------
+-- peers panel
+local peers_panel = enet_ui.peer_list_panel( )
+peers_panel.window:hide()
 
+------------------------------------------------------------------------------------------
+-- stats panel
+local stats_panel = enet_ui.stats_window({ 325, 475, 100, 200 })
+stats_panel.window:hide()
 
 -- signal callbacks
 function _on_test_log_button_pressed()
@@ -71,19 +79,21 @@ function _on_start_server_button_pressed()
             log_display:log(string.format("[failed to start server at %s]",tostring(server)))
         end
     elseif server.host then
-        if server.host then
-            server:stop()
-            if not server.host then
-                server_panel.button_start.label = "stopped"
-                server_panel.button_start.style.hilite = {1.0,0.2,0.2,1.0}
-                server_panel.button_start.style.focus = {1.0,0.4,0.4,1.0}        
-                -- log_panel:log(string.format("[stoppped server at %s]",tostring(server)))
-                log_display:log(string.format("[stopped server at %s]",tostring(server)))
-            else
-                -- log_panel:log(string.format("[failed to stop server at %s]",tostring(server)))
-                log_display:log(string.format("[failed to stop server at %s]",tostring(server)))
-            end
+
+        server:stop()
+        if not server.host then
+            server_panel.button_start.label = "stopped"
+            server_panel.button_start.style.hilite = {1.0,0.2,0.2,1.0}
+            server_panel.button_start.style.focus = {1.0,0.4,0.4,1.0}        
+            -- log_panel:log(string.format("[stoppped server at %s]",tostring(server)))
+            log_display:log(string.format("[stopped server at %s]",tostring(server)))
+            peers_panel.update_peers_list( server )
+            stats_panel.update_connections( server )
+        else
+            -- log_panel:log(string.format("[failed to stop server at %s]",tostring(server)))
+            log_display:log(string.format("[failed to stop server at %s]",tostring(server)))
         end
+
     end
 end
 
@@ -105,15 +115,6 @@ server_panel.signals:register("button_clear_log_clicked", _on_clear_log_button_p
 server_panel.signals:register("button_test_log_clicked", _on_test_log_button_pressed)
 server_panel.signals:register("port_field_changed", _on_port_field_changed)
 
-------------------------------------------------------------------------------------------
--- peers panel
-local peers_panel = enet_ui.peer_list_panel( )
-peers_panel.window:hide()
-
-------------------------------------------------------------------------------------------
--- stats panel
-local stats_panel = enet_ui.stats_window({ 325, 475, 100, 200 })
-stats_panel.window:hide()
 
 ------------------------------------------------------------------------------------------
 -- dummy logging

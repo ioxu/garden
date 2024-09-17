@@ -72,6 +72,7 @@ function client_ui.main_menu()
         this.address.lable ~= "<address>"
         then
             this.status = this.STATUS_READY_TO_CONNECT
+            this.button_connect.label = "connect"
             this.button_connect.style.hilite = {0.2,0.65,0.2,1.0}
             this.button_connect.style.focus = {0.3,0.75,0.3,1.0}
         end
@@ -84,6 +85,17 @@ function client_ui.main_menu()
         this.button_connect.style.hilite = {0.65,0.55,0.2,1.0}
         this.button_connect.style.focus = {0.75,0.65,0.3,1.0}
     end
+
+    
+    this.announce_disconnected = function()
+        print("announce_disconnected()")
+        this.status = this.STATUS_NOT_READY_TO_CONNECT
+        -- this.button_connect.label = "DISCONNECTED"
+        -- this.button_connect.style.hilite = {0.65,0.55,0.2,1.0}
+        -- this.button_connect.style.focus = {0.75,0.65,0.3,1.0}
+        this.evaluate_ready_to_connect()
+    end
+
 
     print('this.nickname.value ~= ""', (this.nickname.value ~= "") )
     this.evaluate_ready_to_connect()

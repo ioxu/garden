@@ -8,6 +8,7 @@ local net = require "lib.network" -- main networking objects
 -- local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
 local log_ui = require "lib.log_ui"
+local tables = require "lib.tables"
 
 ------------------------------------------------------------------------------------------
 local server = net.Server:new("The Garden")
@@ -23,8 +24,6 @@ local function print(...)
     oldprint( print_header .. result )
 end
 
-------------------------------------------------------------------------------------------
--- local inferred_address = net.get_ip_info()
 ------------------------------------------------------------------------------------------
 local font_small = love.graphics.newFont(10)
 local font_mono_small = love.graphics.newFont( "resources/fonts/SourceCodePro-Regular.ttf", 10 )
@@ -69,13 +68,11 @@ function _on_start_server_button_pressed()
     if server.host == nil then
         server:start()
         if server.host then
-            -- log_panel:log(string.format("[server started at %s]",tostring(server)))
             log_display:log(string.format("[server started at %s]",tostring(server)))
             server_panel.button_start.label = "started"
             server_panel.button_start.style.hilite = {0.1,0.55,0.1,1.0}
             server_panel.button_start.style.focus = {0.4,1.0,0.4,1.0}    
         else
-            -- log_panel:log(string.format("[failed to start server at %s]",tostring(server)))
             log_display:log(string.format("[failed to start server at %s]",tostring(server)))
         end
     elseif server.host then
@@ -85,12 +82,10 @@ function _on_start_server_button_pressed()
             server_panel.button_start.label = "stopped"
             server_panel.button_start.style.hilite = {1.0,0.2,0.2,1.0}
             server_panel.button_start.style.focus = {1.0,0.4,0.4,1.0}        
-            -- log_panel:log(string.format("[stoppped server at %s]",tostring(server)))
             log_display:log(string.format("[stopped server at %s]",tostring(server)))
             peers_panel.update_peers_list( server )
             stats_panel.update_connections( server )
         else
-            -- log_panel:log(string.format("[failed to stop server at %s]",tostring(server)))
             log_display:log(string.format("[failed to stop server at %s]",tostring(server)))
         end
 
@@ -134,24 +129,26 @@ end
 
 ------------------------------------------------------------------------------------------
 --- server callbacks
-function _on_peer_connected(peer)
-    -- log_panel:log( string.format("[peer connected] %s (index: %s, id: %s )", peer, peer:index(), peer:connect_id()) )
-    log_display:log( string.format("[peer connected] %s (index: %s, id: %s )", peer, peer:index(), peer:connect_id()) )
+function _on_peer_connected(event)
+    log_display:log( string.format("[peer connected] %s (index: %s, id: %s )", event.peer, event.peer:index(), event.peer:connect_id()) )
     print("adding peer to the peers_panel")
     peers_panel.update_peers_list( server )
     stats_panel.update_connections( server )
 end
 
-function _on_peer_disconnected( peer )
-    -- log_panel:log( string.format("[peer disconnected] %s", peer) )
-    log_display:log( string.format("[peer disconnected] %s", peer) )
+function _on_peer_disconnected( event )
+    log_display:log( string.format("[peer disconnected] %s", event.peer) )
     peers_panel.update_peers_list( server )
     stats_panel.update_connections( server )
 end
 
-function _on_peer_received( message, peer )
-    -- log_panel:log( string.format("[received] %s '%s'", peer, message) )
-    log_display:log( string.format("[received] %s '%s'", peer, message) )
+function _on_peer_received( event )
+    log_display:log( string.format("[received] '%s'", event.data) )
+    local split = tables.split_by_pipe(event.data)
+    if split[1] == "my-id" then
+       server:set_nickname( event.peer:index(), split[2] )
+       peers_panel.update_peers_list( server )
+    end
 end
 
 server.signals:register("connected", _on_peer_connected)
@@ -161,7 +158,6 @@ server.signals:register("received", _on_peer_received)
 ------------------------------------------------------------------------------------------
 function EnetTest:init()
     --- scene_manager callback
-    -- log_panel:log( "[log begin]" )
     log_display:log("[log begin]")
     print(string.format("server: %s", server))
 end

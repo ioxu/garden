@@ -25,6 +25,7 @@ Network = {}
 --- @field peer table
 --- @field received_data boolean
 --- @field clients table
+--- @field nicknames table table of string nicknames for each client (submitted by each client in the 'my-id' pragma)
 --- @field signals Signal
 Network.Server = {}
 
@@ -42,6 +43,7 @@ function Network.Server:new( name, address, port )
     self.peer = nil
     self.received_data = false
     self.clients = {}
+    self.nicknames = {}
     self.signals = signal:new()
     return self
 end
@@ -88,7 +90,6 @@ function Network.Server:update( dt )
     if not self.host then return end
     
     local _nc = self:nclients()
-    -- print("#server.clients", _nc)
     if _nc == 0 then
         self.received_data = false
     end
@@ -105,21 +106,27 @@ function Network.Server:update( dt )
             if v=="disconnect" then
                 print(string.format("peer %s disconnected!", self.peer))
                 self.clients[self.peer:index()] = nil
-                self.signals:emit("disconnected", event.peer)
+                self.nicknames[self.peer:index()] = nil
+                self.signals:emit("disconnected", event)
             end
         end
         if event.type == "receive" then
-            received_message = event.data -- split_by_pipe(event.data)[2]
-            event.peer:send( string.format("recieved message '%s'", received_message ))
-            self.signals:emit("received", received_message, event.peer)
+            self.signals:emit("received", event)
         end
 
         if event.type == "connect" then
             self.clients[self.peer:index()] = self.peer
             event.peer:send(string.format("your-id|%s|%s", self.peer, self.peer:connect_id()))
-            self.signals:emit("connected", event.peer)
+            self.signals:emit("connected", event)
         end
     end
+end
+
+--- Sets a nickname for an index matching the client index
+--- @param index number nickname index to set
+--- @param nickname string nickname to set
+function Network.Server:set_nickname( index, nickname )
+    self.nicknames[index] = nickname
 end
 
 
@@ -157,7 +164,7 @@ end
 
 
 function Network.Client:connect(address, port)
-    self.host:connect(string.format('%s:%s', address, port))--'127.0.0.1:6789')
+    self.host:connect(string.format('%s:%s', address, port))
 end
 
 
@@ -176,9 +183,6 @@ function Network.Client:update(dt)
             for k, v in pairs(event) do
                 print(string.format("%s %s",k,v) )
             end
-            -- print( string.format("data: %s",event.data) )
-            event.peer:send("miow")
-
 
             if event.type == "connect" then
                 self.signals:emit("connected", event)
@@ -199,9 +203,10 @@ function Network.Client:disconnect()
         self.peer:disconnect_now()
         self.peer = nil
     end
-    self.host = nil
+    -- self.host = nil
     self.received_data = false
 end
+
 
 ------------------------------------
 function Network.get_ip_info()

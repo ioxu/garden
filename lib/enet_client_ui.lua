@@ -26,7 +26,7 @@ function client_ui.main_menu()
     this.STATUS_IS_CONNECTED = 3
     this.status = this.STATUS_NOT_READY_TO_CONNECT
     
-    this.window = gspot:group("main menu",{x=500,y=500, w=256,h=128})
+    this.window = gspot:group("main menu",{x=500,y=500, w=256,h=180})
 
     this.nickname = gspot:input("nickname",{x=64,y=4, w = this.window.pos.w -64 -4, h = unit}, this.window)
     this.nickname.keyrepeat = true
@@ -52,6 +52,12 @@ function client_ui.main_menu()
         this_port.Gspot:unfocus()
     end
 
+    this.local_address = gspot:text("<local address>", {x=64, y=4, w=this.window.pos.w -8, h = unit }, this.window)
+    this.window:addchild(this.local_address, 'vertical')
+
+    this.connect_id = gspot:text("<connect_id>", {x=64, y=4, w=this.window.pos.w -8, h = unit }, this.window)
+    this.window:addchild(this.connect_id, 'vertical')
+
     this.button_connect = gspot:button("connect", {x=4,y=this.window.pos.h - (unit*4) -4, w=this.window.pos.w -8, h = unit*2 }, this.window)
     this.window:addchild(this.button_connect, 'vertical')
     this.button_connect.click = function(this_button)
@@ -60,6 +66,9 @@ function client_ui.main_menu()
             this.signals:emit("connect_attempted")
         elseif this.status == this.STATUS_NOT_READY_TO_CONNECT then
             print("cannot connect, check settings")
+        elseif this.status == this.STATUS_IS_CONNECTED then
+            print("disconnecting")
+            this.signals:emit("disconnect_attempted")
         end
     end
 
@@ -96,6 +105,13 @@ function client_ui.main_menu()
         this.evaluate_ready_to_connect()
     end
 
+    this.set_local_address = function( this_ui, address )
+        this.local_address.label = address
+    end
+    
+    this.set_connect_id = function( this_ui, connect_id)
+        this.connect_id.label = connect_id
+    end
 
     print('this.nickname.value ~= ""', (this.nickname.value ~= "") )
     this.evaluate_ready_to_connect()

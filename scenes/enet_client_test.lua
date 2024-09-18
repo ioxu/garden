@@ -4,6 +4,7 @@ local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
 local client_ui = require "lib.enet_client_ui"
 local log_ui = require "lib.log_ui"
+local tables = require "lib.tables"
 ------------------------------------------------------------------------------------------
 local oldprint = print
 local print_header = "\27[38;5;42m[enet_client_test\27[38;5;80m.scene\27[38;5;221m]\27[0m "
@@ -32,6 +33,16 @@ end
 
 function _on_received( event )
     log_panel:log(string.format("received: '%s'", event.data))
+
+    local split = tables.split_by_pipe(event.data)  --split_by_pipe(event.data)
+    -- print(string.format("split[0] %s", split[1]))
+    if split[1] == "your-id" then
+        main_menu:set_local_address( split[2] )
+        main_menu:set_connect_id( split[3] )
+        local send_str = string.format("my-id|%s", main_menu.nickname.value)
+        log_panel:log("send '".. send_str .."'")
+        event.peer:send(send_str)
+    end
 end
 
 function _on_disconnected( event )
@@ -45,8 +56,8 @@ client.signals:register("disconnected", _on_disconnected)
 
 
 local function _on_connect_attempted()
-    print("attempting connecion")
-    log_panel:log( "attempting connecion" )
+    print("attempting connection")
+    log_panel:log( "attempting connection" )
     print(string.format( "%s:%s", main_menu.address.label, main_menu.port ) )
     client:connect( main_menu.address.label, main_menu.port )
     -- client:connect( "192.168.1.106", 6789)
@@ -54,7 +65,17 @@ local function _on_connect_attempted()
     main_menu.announce_connected()
 end
 
+
+local function _on_disconnect_attempted()
+    print("attempting disconnection")
+    log_panel:log("attempting disconnection")
+    client:disconnect()
+    main_menu.announce_disconnected()
+end
+
+
 main_menu.signals:register("connect_attempted", _on_connect_attempted)
+main_menu.signals:register("disconnect_attempted", _on_disconnect_attempted)
 
 
 ------------------------------------------------------------------------------------------

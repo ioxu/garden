@@ -7,6 +7,8 @@ Enettest = {}
 
 local unit = gspot.style.unit
 
+local font_medium = love.graphics.newFont(28)
+
 ------------------------------------------------------------------------------------------
 local oldprint = print
 local print_header = "\27[38;5;221m[enet_test_ui\27[38;5;80m.lib\27[38;5;221m]\27[0m "
@@ -94,8 +96,6 @@ function Enettest.peer_list_panel(pos)
     this.peers = {}
     this.peers_list_group = gspot:group( "", {x=4,y=unit +4, w=this.window.pos.w-8, h=this.window.pos.h-unit-8 }, this.window )
     this.peers_list_group.style.bg = {0.2,0.2,0.2,1}
-    -- this.peers_list_group.style.labelfg = {0,0,0,0}
-    -- this.window:addchild( this.peers_list_group, 'vertical' )
 
     this.update_peers_list = function( server )
         print(string.format("updating peers list"))
@@ -114,9 +114,26 @@ function Enettest.peer_list_panel(pos)
         local i = 0
         for k,v in pairs(server.clients) do
             print(string.format("  server.clients[%s]: %s",k, server.clients[k]) )
-            this.peers[k] = gspot:button( tostring(v), {x=4, y=4 + (unit*2 + 4)*i , w=this.peers_list_group.pos.w-8, h=unit *2}, this.peers_list_group )
-            -- this.peers[k] = gspot:group( tostring(v), {x=4, y=4 + (unit*2 + 4)*i , w=this.peers_list_group.pos.w-8, h=unit *2}, this.peers_list_group )
-            this.peers[k].style.bg = {0.3,0.3,0.3,1}
+            local button_label =  string.format("%s  %s", server.nicknames[k], tostring(v))
+            local nickname = server.nicknames[k]
+            this.peers[k] = gspot:button( button_label, {x=4, y=4 + (unit*2 + 4)*i , w=this.peers_list_group.pos.w-8, h=unit *2}, this.peers_list_group )
+            this.peers[k].style.hilite = {0.4,0.4,0.4,1}
+            
+            -- custom draw function
+            this.peers[k].draw = function( this_button, pos )
+                -- draw normal button
+                gspot.button.draw(this_button, pos)
+                
+                -- draw custom things
+                if nickname then
+                    love.graphics.setFont(font_medium)
+                    love.graphics.print( nickname, pos.x +4, pos.y )
+                end
+                -- orange dot for no reason
+                love.graphics.setColor(1.0,0.8,0.5,0.75)
+                love.graphics.circle("fill", pos.x + (pos.w-15.0), pos.y+(pos.h/2.0), 10.0)
+            end
+            
             i = i +1
         end
     end

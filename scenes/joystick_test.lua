@@ -11,6 +11,7 @@ local JoystickTest ={}
 -- quit
 local stick_move_mag = 30
 local lstick_pos = {x=200, y= 400}
+local font_medium = love.graphics.newFont(15)
 
 ------------------------------------------------------------------------------------------
 --- @alias side
@@ -317,9 +318,10 @@ function JoystickTest:draw()
     for i, joystick in ipairs(joysticks) do
         -- love.graphics.print(i, 5, 50 + i * 20)
         love.graphics.setColor(0.2,0.2,0.2,1)
+        love.graphics.setFont( font_medium )
         local joystick_name = "'"..joystick:getName().."'"
-        love.graphics.print( joystick_name, lstick_pos.x +40, lstick_pos.y +30 + i * 20)
-        love.graphics.print("last button: "..lastbutton, lstick_pos.x+40, lstick_pos.y + 50 + i * 20)
+        love.graphics.print( joystick_name, lstick_pos.x +18, lstick_pos.y +30 + i * 20)
+        love.graphics.print("last button: "..lastbutton, lstick_pos.x+18, lstick_pos.y + 50 + i * 20)
         
         love.graphics.setLineWidth(5.0)
         draw_joystick(joystick, "left", lstick_pos.x, lstick_pos.y )

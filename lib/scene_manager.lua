@@ -153,8 +153,6 @@ return{
         end
     end,
 
-    -- TODO: add gamepad events
-
     gamepadpressed=function(self, joystick, button)
         for i,v in pairs( self.states ) do
             if self.states[i].gamepadpressed then

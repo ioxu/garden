@@ -22,5 +22,13 @@ function Tables.split_by_pipe(input)
 end
 
 
+function Tables.split_by_comma(str)
+    local result = {}
+    for word in string.gmatch(str, '([^,]+)') do
+        table.insert(result, word)
+    end
+    return result
+end
+
 
 return Tables

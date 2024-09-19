@@ -5,6 +5,7 @@ local signal = require "lib.signal"
 local client_ui = require "lib.enet_client_ui"
 local log_ui = require "lib.log_ui"
 local tables = require "lib.tables"
+local joystick_diagram = require "lib.joystick_diagram"
 ------------------------------------------------------------------------------------------
 local oldprint = print
 local print_header = "\27[38;5;42m[enet_client_test\27[38;5;80m.scene\27[38;5;221m]\27[0m "
@@ -16,6 +17,8 @@ local function print(...)
     oldprint( print_header .. result )
 end
 ------------------------------------------------------------------------------------------
+local joysticks = love.joystick.getJoysticks()
+
 local log_panel = log_ui:new("client log panel")
 
 ------------------------------------------------------------------------------------------
@@ -118,6 +121,7 @@ end
 function EnetClientTest:draw()
     -- print("EnetClientTest:init")
     log_panel:draw()
+    joystick_diagram.draw_PS4Controller_diagram( joysticks[1] , 1300, 825)
 end
 
 

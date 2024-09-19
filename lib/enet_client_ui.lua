@@ -1,6 +1,7 @@
 local net = require "lib.network" -- main networking objects
 local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
+
 local unit = gspot.style.unit
 ------------------------------------------------------------------------------------------
 local oldprint = print

@@ -94,7 +94,7 @@ local rect_shape = {
 }
 
 
-function stretch_rect_shape( amount )
+local function stretch_rect_shape( amount )
     local rect_shape = {
         -14, -6 -amount,
          14, -6 -amount,

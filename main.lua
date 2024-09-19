@@ -104,7 +104,8 @@ function love.load()
     if CLIENT_MODE then
         Scenes:init("enet_client_test")
     else
-        Scenes:init("enet_test")
+        -- Scenes:init("enet_test")
+        Scenes:init("joystick_test")
     end
     scene_selector = new_scene_selector()
     if CLIENT_MODE then
@@ -220,6 +221,10 @@ function love.keypressed(key, code, isrepeat)
     else
         gspot:feedback(key) -- why not
     end
+end
+
+function love.joystickpressed( joystick, button )
+    Scenes:joystickpressed( joystick, button )
 end
 
 

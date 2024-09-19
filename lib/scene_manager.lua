@@ -151,6 +151,72 @@ return{
                 self.states[i]:quit()
             end
         end
+    end,
+
+    -- TODO: add gamepad events
+
+    gamepadpressed=function(self, joystick, button)
+        for i,v in pairs( self.states ) do
+            if self.states[i].gamepadpressed then
+                self.states[i]:gamepadpressed( joystick, button )
+            end
+        end
+    end,
+
+    gamepadreleased=function(self, joystick, button)
+        for i,v in pairs( self.states) do
+            if self.states[i].gamepadreleased then
+                self.states[i]:gamepadreleased( joystick, button)
+            end
+        end
+    end,
+
+    gamepadaxis=function(self, joystick, axis, value)
+        for i,v in pairs( self.states ) do
+            if self.states[i].gamepadaxis then
+                self.states[i]:gamepadaxis( joystick, axis, value)
+            end
+        end
+    end,
+
+    joystickpressed=function(self, joystick, button)
+        for i,v in pairs( self.states ) do
+            if self.states[i].joystickpressed then
+                self.states[i]:joystickpressed( joystick, button )
+            end
+        end
+    end,
+
+    joystickreleased=function(self, joystick, button)
+        for i,v in pairs( self.states ) do
+            if self.states[i].joystickreleased then
+                self.states[i]:joystickreleased( joystick, button )
+            end
+        end
+    end,
+
+    joystickaxis=function( self, joystick, axis, value )
+        for i,v in pairs( self.states ) do
+            if self.states[i].joystickaxis then
+                self.states[i]:joystickaxis( joystick, axis, value)
+            end
+        end
+    end,
+
+    joystickadded=function( self, joystick)
+        for i,v in pairs(self.states) do
+            if self.states[i].joystickadded then
+                self.states[i]:joystickadded( joystick )
+            end
+        end
+    end,
+
+    joystickremoved=function( self, joystick)
+        for i,v in pairs(self.states) do
+            if self.states[i].joystickremoved then
+                self.states[i]:joystickremoved( joystick )
+            end
+        end
     end
 
 }

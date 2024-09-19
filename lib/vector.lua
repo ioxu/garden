@@ -28,12 +28,19 @@ function Vector.distance(x1, y1, x2, y2)
 end
 
 
+function Vector.length(x1, y1)
+    local dx = 0.0 - x1
+    local dy = 0.0 - y1
+    return math.sqrt(dx * dx + dy * dy)
+end
+
+
 function Vector.normalise(x1, y1)
 	local l = Vector.distance( 0.0, 0.0, x1, y1 )
 	if l > 0 then
 		return x1 / l, y1 / l
     else
-        return nil
+        return nil, nil
     end
 end
 

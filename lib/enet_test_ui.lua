@@ -114,7 +114,8 @@ function Enettest.peer_list_panel(pos)
         local i = 0
         for k,v in pairs(server.clients) do
             print(string.format("  server.clients[%s]: %s",k, server.clients[k]) )
-            local button_label =  string.format("%s  %s", server.nicknames[k], tostring(v))
+            -- local button_label =  string.format("%s  %s", server.nicknames[k], tostring(v))
+            local button_label =  string.format("%s: %s  id: %s", v:index(), tostring(v), v:connect_id())
             local nickname = server.nicknames[k]
             this.peers[k] = gspot:button( button_label, {x=4, y=4 + (unit*2 + 4)*i , w=this.peers_list_group.pos.w-8, h=unit *2}, this.peers_list_group )
             this.peers[k].style.hilite = {0.4,0.4,0.4,1}

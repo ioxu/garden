@@ -136,17 +136,20 @@ function _on_peer_connected(event)
     stats_panel.update_connections( server )
 end
 
-function _on_peer_disconnected( event )
-    log_display:log( string.format("[peer disconnected] %s", event.peer) )
+---comment
+---@param event any
+---@param disconnect_data Disconnect_Data 
+function _on_peer_disconnected( event, disconnect_data )
+    log_display:log( string.format("[peer disconnected][%s] %s", disconnect_data.nickname, event.peer) )
     peers_panel.update_peers_list( server )
     stats_panel.update_connections( server )
 end
 
 function _on_peer_received( event )
-    log_display:log( string.format("[received] '%s'", event.data) )
-    local split = tables.split_by_pipe(event.data)
-    if split[1] == "my-id" then
-       server:set_nickname( event.peer:index(), split[2] )
+    log_display:log( string.format("[received][%s] '%s'", server.nicknames[event.peer:index()], event.data) )
+    local message = tables.split_by_pipe(event.data)
+    if message[1] == "my-id" then
+       server:set_nickname( event.peer:index(), message[2] )
        peers_panel.update_peers_list( server )
     end
 end

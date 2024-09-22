@@ -26,7 +26,7 @@ return{
         --gets all the game states from the game states directory
         for i,v in ipairs(love.filesystem.getDirectoryItems("scenes")) do
             if string.find(v, ".lua") then
-                print(string.format("[scene_manager] found %s", v))
+                print(string.format("found %s", v))
                 local state_name = string.gsub(v, ".lua", "")
               self.states[state_name]=require("scenes." .. string.gsub(v, ".lua", ""))
                 if self.states[state_name].description then

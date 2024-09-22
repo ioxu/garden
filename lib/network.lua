@@ -14,6 +14,8 @@ local function print(...)
     oldprint( print_header .. result )
 end
 
+local SERVICE_LINE_STRING = "\27[38;5;42m─────────────────────── service()\27[0m"
+
 ------------------------------------------------------------------------------------------
 Network = {}
 
@@ -85,6 +87,12 @@ function Network.Server:stop()
     self.received_data = false
 end
 
+--- Disconnect_Data class is for passing some things from a peer's state out through signals etc
+--- after the peer has been disconnected. Some state does not exist once a peer has disconnected.
+--- @class Disconnect_Data
+--- @field index number the lua-enet connection index (not connect_id)
+--- @field nickname string the nickname as stored in server.nicknames
+
 
 function Network.Server:update( dt )
     if not self.host then return end
@@ -100,14 +108,18 @@ function Network.Server:update( dt )
     if event then
         self.received_data = true
         self.peer = event.peer
-        print("----")
+        print(SERVICE_LINE_STRING)
         for k, v in pairs(event) do
             print(string.format("%s %s", k, v))
             if v=="disconnect" then
-                print(string.format("peer %s disconnected!", self.peer))
+                print(string.format("peer %s '%s' disconnected!", self.peer, self.nicknames[self.peer:index()]))
+                local disconnect_data = {} -- Disconnect_Data
+                disconnect_data.index = self.peer:index()
+                disconnect_data.nickname = self.nicknames[self.peer:index()]
+
                 self.clients[self.peer:index()] = nil
                 self.nicknames[self.peer:index()] = nil
-                self.signals:emit("disconnected", event)
+                self.signals:emit("disconnected", event, disconnect_data)
             end
         end
         if event.type == "receive" then
@@ -179,7 +191,7 @@ function Network.Client:update(dt)
         if event then
             self.received_data = true
             self.peer = event.peer
-            print("----")
+            print(SERVICE_LINE_STRING)
             for k, v in pairs(event) do
                 print(string.format("%s %s",k,v) )
             end

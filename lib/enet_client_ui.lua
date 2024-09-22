@@ -103,6 +103,7 @@ function client_ui.main_menu()
         -- this.button_connect.label = "DISCONNECTED"
         -- this.button_connect.style.hilite = {0.65,0.55,0.2,1.0}
         -- this.button_connect.style.focus = {0.75,0.65,0.3,1.0}
+        this.connect_id.label = "<connect_id>"
         this.evaluate_ready_to_connect()
     end
 

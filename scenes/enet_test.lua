@@ -9,6 +9,7 @@ local net = require "lib.network" -- main networking objects
 local signal = require "lib.signal"
 local log_ui = require "lib.log_ui"
 local tables = require "lib.tables"
+local entities = require "lib.entities"
 
 ------------------------------------------------------------------------------------------
 local server = net.Server:new("The Garden")
@@ -30,6 +31,7 @@ local font_mono_small = love.graphics.newFont( "resources/fonts/SourceCodePro-Re
 local font_medium = love.graphics.newFont(25)
 local font_large = love.graphics.newFont(40)
 
+-- local bg_image
 ------------------------------------------------------------------------------------------
 -- log panel
 local log_display = log_ui:new("server log display")
@@ -134,6 +136,14 @@ function _on_peer_connected(event)
     print("adding peer to the peers_panel")
     peers_panel.update_peers_list( server )
     stats_panel.update_connections( server )
+    
+    
+    local xpos, ypos = 300, 300
+    entities.spawn( event.peer:index(), xpos, ypos )
+    -- local send_str = string.format("your-id|%s|%s", event.peer, event.peer:connect_id())
+    local send_str = string.format("your-id|%s|%s|%s|%s", event.peer, event.peer:index(), xpos, ypos)
+    print("send_str: ", send_str)
+    event.peer:send(send_str)
 end
 
 ---comment
@@ -143,6 +153,8 @@ function _on_peer_disconnected( event, disconnect_data )
     log_display:log( string.format("[peer disconnected][%s] %s", disconnect_data.nickname, event.peer) )
     peers_panel.update_peers_list( server )
     stats_panel.update_connections( server )
+
+    entities.despawn( event.peer:index() )
 end
 
 function _on_peer_received( event )
@@ -151,6 +163,9 @@ function _on_peer_received( event )
     if message[1] == "my-id" then
        server:set_nickname( event.peer:index(), message[2] )
        peers_panel.update_peers_list( server )
+    end
+    if message[1] == "move" then
+        entities.move(tonumber(message[2]), tonumber(message[3]), tonumber(message[4]))
     end
 end
 
@@ -163,6 +178,8 @@ function EnetTest:init()
     --- scene_manager callback
     log_display:log("[log begin]")
     print(string.format("server: %s", server))
+    -- bg_image = love.graphics.newImage( "resources/garden.png" )
+    -- love.graphics.setDefaultFilter('nearest', 'nearest')
 end
 
 function EnetTest:defocus()
@@ -199,19 +216,30 @@ function EnetTest:draw()
     --- scene_manager callback
     love.graphics.setColor(1,1,1,1)
     love.graphics.clear(0.15,0.15,0.15,1.0)
+    -- love.graphics.setColor(1,1,1,0.02)
+    -- love.graphics.draw(bg_image)
     love.graphics.print("Enet test")
 
     love.graphics.setColor(0.4,0.4,0.4,1.0)
     love.graphics.setFont(font_medium)
     local server_text_pos = {x = server_panel.window.pos.x,
-                            y = server_panel.window.pos.y - font_medium:getHeight() - 4
+        y = server_panel.window.pos.y - font_medium:getHeight() - 4
     }
     if server.host then
         love.graphics.print(string.format("server started %s",tostring(server)), server_text_pos.x , server_text_pos.y)
     else        
         love.graphics.print("server stopped", server_text_pos.x , server_text_pos.y)
     end
-    
+
+    love.graphics.setFont(font_small)
+    entities.draw()
+    love.graphics.setColor(1,1,1,1)
+    for player_id, entity in pairs(entities.entities) do
+        if server.nicknames[player_id] then
+            love.graphics.print( server.nicknames[player_id], entity.x - 8, entity.y + 8 )
+        end
+    end
+
     log_display:draw()
 end
 

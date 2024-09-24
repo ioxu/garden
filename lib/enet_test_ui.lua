@@ -3,6 +3,7 @@
 local gspot = require "lib.gspot.Gspot"
 local signal = require "lib.signal"
 local net = require "lib.network"
+
 Enettest = {}
 
 local unit = gspot.style.unit
@@ -92,10 +93,11 @@ function Enettest.peer_list_panel(pos)
     pos = pos or {450, 350, 512, 512}
     this.window = gspot:group("Peers", pos)
     this.window.drag = true
+    this.window.style.bg = {this.window.style.bg[1], this.window.style.bg[2], this.window.style.bg[3], 0.75}
     
     this.peers = {}
     this.peers_list_group = gspot:group( "", {x=4,y=unit +4, w=this.window.pos.w-8, h=this.window.pos.h-unit-8 }, this.window )
-    this.peers_list_group.style.bg = {0.2,0.2,0.2,1}
+    this.peers_list_group.style.bg = {0.2, 0.2, 0.2, 0.75}
 
     this.update_peers_list = function( server )
         print(string.format("updating peers list"))

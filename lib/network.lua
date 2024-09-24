@@ -128,7 +128,7 @@ function Network.Server:update( dt )
 
         if event.type == "connect" then
             self.clients[self.peer:index()] = self.peer
-            event.peer:send(string.format("your-id|%s|%s", self.peer, self.peer:connect_id()))
+            -- event.peer:send(string.format("your-id|%s|%s", self.peer, self.peer:connect_id()))
             self.signals:emit("connected", event)
         end
     end
@@ -168,6 +168,7 @@ function Network.Client:new(name)
     local self = setmetatable({}, Network.Client)
     self.name = name or "client"
     self.host = enet.host_create()
+    self.server = nil
     self.peer = nil
     self.received_data = nil
     self.signals = signal:new()
@@ -198,6 +199,7 @@ function Network.Client:update(dt)
 
             if event.type == "connect" then
                 self.signals:emit("connected", event)
+                self.server = event.peer
             elseif event.type == "receive" then
                 self.signals:emit("received", event)
             elseif event.type == "disconnect" then

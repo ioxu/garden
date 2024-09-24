@@ -27,9 +27,15 @@ function client_ui.main_menu()
     this.STATUS_IS_CONNECTED = 3
     this.status = this.STATUS_NOT_READY_TO_CONNECT
     
-    this.window = gspot:group("main menu",{x=500,y=500, w=256,h=180})
+    this.window = gspot:group("",{x=500,y=500, w=256,h=180})
+    this.window.style.bg = {0.2, 0.2, 0.2, 0.75}
 
     this.nickname = gspot:input("nickname",{x=64,y=4, w = this.window.pos.w -64 -4, h = unit}, this.window)
+    this.nickname.style.bg[4] = 0.75
+    this.nickname.style.default[4] = 0.75
+    this.nickname.style.focus[4] = 0.75
+    this.nickname.style.hilite[4] = 0.75
+
     this.nickname.keyrepeat = true
     this.window:addchild( this.nickname )
     this.nickname.done = function( this_input )
@@ -44,6 +50,10 @@ function client_ui.main_menu()
     
     this.port = "6789"
     this.port_input = gspot:input("port",{x=64,y=4,w= this.window.pos.w -64 -4, h=unit}, this.window)
+    this.port_input.style.bg[4] = 0.75
+    this.port_input.style.default[4] = 0.75
+    this.port_input.style.focus[4] = 0.75
+    this.port_input.style.hilite[4] = 0.75
     this.port_input.value = this.port
     this.window:addchild(this.port_input, 'vertical')
     this.port_input.done = function( this_port )
@@ -76,15 +86,15 @@ function client_ui.main_menu()
     -- check ready
     this.evaluate_ready_to_connect = function()
         this.status = this.STATUS_NOT_READY_TO_CONNECT
-        this.button_connect.style.hilite = {0.65,0.2,0.2,1.0}
-        this.button_connect.style.focus = {0.75,0.3,0.3,1.0}
+        this.button_connect.style.hilite = {0.65,0.2,0.2,0.75}
+        this.button_connect.style.focus = {0.75,0.3,0.3,0.75}
         if this.nickname.value ~= "" and
         this.address.lable ~= "<address>"
         then
             this.status = this.STATUS_READY_TO_CONNECT
             this.button_connect.label = "connect"
-            this.button_connect.style.hilite = {0.2,0.65,0.2,1.0}
-            this.button_connect.style.focus = {0.3,0.75,0.3,1.0}
+            this.button_connect.style.hilite = {0.2,0.65,0.2,0.75}
+            this.button_connect.style.focus = {0.3,0.75,0.3,0.75}
         end
     end
 
@@ -92,8 +102,8 @@ function client_ui.main_menu()
         print("announce_connected()")
         this.status = this.STATUS_IS_CONNECTED
         this.button_connect.label = "CONNECTED"
-        this.button_connect.style.hilite = {0.65,0.55,0.2,1.0}
-        this.button_connect.style.focus = {0.75,0.65,0.3,1.0}
+        this.button_connect.style.hilite = {0.65,0.55,0.2,0.75}
+        this.button_connect.style.focus = {0.75,0.65,0.3,0.75}
     end
 
     

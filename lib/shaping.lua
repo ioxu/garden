@@ -35,6 +35,13 @@ function Shaping.table_lerp( t1, t2, factor )
 end
 
 
+function Shaping.clamp(x, min, max)
+    if x < min then return min end
+    if x > max then return max end
+    return x
+end
+
+
 function Shaping.lerp( v0, v1, t)
         return (1 - t) * v0 + t * v1
 end

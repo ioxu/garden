@@ -45,8 +45,16 @@ function client_ui.main_menu()
         this.evaluate_ready_to_connect()
     end
     
-    this.address = gspot:text("<address>", {x=64,y=4,w=this.window.pos.w -4, h= unit}, this.window)
+    -- this.address = gspot:text("<address>", {x=64,y=4,w=this.window.pos.w -4, h= unit}, this.window)
+    -- this.window:addchild(this.address, 'vertical')
+    this.address = gspot:input("address", {x=64,y=4,w=this.window.pos.w -64 -4, h= unit}, this.window)
+    this.address.value = "<address>"
+    this.address.style.bg[4] = 0.75
+    this.address.style.default[4] = 0.75
+    this.address.style.focus[4] = 0.75
+    this.address.style.hilite[4] = 0.75
     this.window:addchild(this.address, 'vertical')
+
     
     this.port = "6789"
     this.port_input = gspot:input("port",{x=64,y=4,w= this.window.pos.w -64 -4, h=unit}, this.window)

@@ -96,8 +96,10 @@ client.signals:register("disconnected", _on_disconnected)
 local function _on_connect_attempted()
     print("attempting connection")
     log_panel:log( "attempting connection" )
-    print(string.format( "%s:%s", main_menu.address.label, main_menu.port ) )
-    client:connect( main_menu.address.label, main_menu.port )
+    -- print(string.format( "%s:%s", main_menu.address.label, main_menu.port ) )
+    print(string.format( "%s:%s", main_menu.address.value, main_menu.port ) )
+    -- client:connect( main_menu.address.label, main_menu.port )
+    client:connect( main_menu.address.value, main_menu.port )
     -- client:connect( "192.168.1.106", 6789)
     EnetClientTest.connected = true
     main_menu.announce_connected()
@@ -134,7 +136,8 @@ function EnetClientTest:init()
     local address = net.get_ip_info()
     if address then
         print(string.format("  .. %s", address))
-        main_menu.address.label = address
+        -- main_menu.address.label = address
+        main_menu.address.value = address
     else
         print("couldn't infer a connection.")
     end

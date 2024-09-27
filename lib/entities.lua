@@ -6,12 +6,13 @@ Entity_Manager.entities = {}
 Entity_Manager.player_id = nil
 
 
-function Entity_Manager.spawn( player_id, xpos, ypos)
+function Entity_Manager.spawn( player_id, xpos, ypos, nickname)
     local ent = {
         color = {1,1,1,1},
         x = xpos or 0.0,
         y = ypos or 0.0,
         id = player_id,
+        -- nickname = nickname or "Anonymous",
         _quad = love.graphics.newQuad(31*16,22*16,16,16, _sprite_sheet),
     }
     Entity_Manager.entities[ player_id ] = ent

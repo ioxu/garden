@@ -57,8 +57,8 @@ function _on_received( event )
     if split[1] == "your-id" then
         main_menu:set_local_address( split[2] )
         main_menu:set_connect_id( split[3] )
-        entities.player_id = split[3]
-        this_player.id = split[3]
+        entities.player_id = tonumber(split[3])
+        this_player.id = tonumber(split[3])
         this_player.x = tonumber(split[4])
         this_player.y = tonumber(split[5])
 
@@ -67,8 +67,21 @@ function _on_received( event )
         local send_str = string.format("my-id|%s", main_menu.nickname.value)
         log_panel:log("[send] '".. send_str .."'")
         event.peer:send(send_str)
+    elseif split[1] == "peer-id" then
+        -- spawn a peer entity
+        local peer_id = tonumber( split[3] )
+        if peer_id ~= this_player.id then
+            print("SPAWN A PEER ", peer_id)
+            entities.spawn( peer_id, tonumber(split[4]), tonumber(split[5]) )
+        end
+    elseif split[1] == "move" then
+        local peer_id = tonumber( split[2] )
+        if peer_id ~= this_player.id then
+            entities.move( peer_id, tonumber(split[3]), tonumber(split[4]) )
+        end
     end
 end
+
 
 function _on_disconnected( event )
     log_panel:log(string.format("disconnected: '%s'", event.data))
@@ -182,6 +195,12 @@ function EnetClientTest:draw()
     entities.draw()
     love.graphics.setColor(1,1,1,1)
     for player_id, entity in pairs(entities.entities) do
+        -- TODO: find a way to get nicknames from server to clients
+        -- local nick = client.server.nicknames[player_id]
+        -- print("nick ",nick)
+        -- nick = nick or "-"
+        -- print("nick ",nick)
+        -- love.graphics.print( client.server.nicknames[player_id], entity.x -8 , entity.y + 8 )
         love.graphics.print( this_player.nickname, entity.x -8 , entity.y + 8 )
     end
 

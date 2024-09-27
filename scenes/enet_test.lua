@@ -137,13 +137,24 @@ function _on_peer_connected(event)
     peers_panel.update_peers_list( server )
     stats_panel.update_connections( server )
     
-    
+    -- ping back to the connected peer
     local xpos, ypos = 300, 300
     entities.spawn( event.peer:index(), xpos, ypos )
     -- local send_str = string.format("your-id|%s|%s", event.peer, event.peer:connect_id())
     local send_str = string.format("your-id|%s|%s|%s|%s", event.peer, event.peer:index(), xpos, ypos)
-    print("send_str: ", send_str)
+    log_display:log(string.format("[send] %s", send_str))
+    print("[send] ", send_str)
     event.peer:send(send_str)
+    for peer_id, entity in pairs(entities.entities) do
+        local send_str = string.format("peer-id|%s|%s|%s|%s", "<noadress>", entity.id, entity.x, entity.y)
+        event.peer:send( send_str )
+    end
+
+    -- broadcast new connection to all others
+    local send_str = string.format("peer-id|%s|%s|%s|%s", event.peer, event.peer:index(), xpos, ypos)
+    log_display:log(string.format("[broadcast] %s", send_str))
+    print("[broadcast] ", send_str)
+    server.host:broadcast( send_str )
 end
 
 ---comment
@@ -155,7 +166,14 @@ function _on_peer_disconnected( event, disconnect_data )
     stats_panel.update_connections( server )
 
     entities.despawn( event.peer:index() )
+
+    -- broadcast peer disconnection
+    local send_str = string.format("unpeer-id|%s|%s", event.peer, event.peer:index())
+    log_display:log(string.format("[broadcast] %s", send_str))
+    print("[broadcast] ", send_str)
+    server.host:broadcast( send_str )
 end
+
 
 function _on_peer_received( event )
     log_display:log( string.format("[received][%s] '%s'", server.nicknames[event.peer:index()], event.data) )
@@ -166,6 +184,10 @@ function _on_peer_received( event )
     end
     if message[1] == "move" then
         entities.move(tonumber(message[2]), tonumber(message[3]), tonumber(message[4]))
+        
+        -- rebroadcast move
+        -- TODO: can't be this simple, right?
+        server.host:broadcast( event.data )
     end
 end
 

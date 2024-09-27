@@ -1,5 +1,6 @@
 screenshots/
 other/
+export/
 
 *.afphoto
 *.afphoto~lock~

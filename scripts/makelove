@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+echo "--------"
+echo "zipping:"
+zip -r ./export/windows/garden.love ./* -x "./other/*" "./export/*" "./scripts/*" "*.afphot*"
+
+if [[ -z $LOVE_EXE_PATH ]]; then
+    echo "LOVE_EXE_PATH env variable undefined"
+else
+    echo "-------"
+    echo "fusing:"
+    cmd /c "copy /b "$LOVE_EXE_PATH"\\lovec.exe+export\\windows\\garden.love export\\windows\\garden.exe"
+    rm ./export/windows/garden.love
+    lovepath=$(cygpath -i -u "$LOVE_EXE_PATH")
+    echo "-------"
+    echo "copy supporting files:"
+    cp -v "$lovepath"/license.txt ./export/windows/
+    cp -v "$lovepath"/love.dll ./export/windows/
+    cp -v "$lovepath"/lua51.dll ./export/windows/
+    cp -v "$lovepath"/mpg123.dll ./export/windows/
+    cp -v "$lovepath"/msvcp120.dll ./export/windows/
+    cp -v "$lovepath"/msvcr120.dll ./export/windows/
+    cp -v "$lovepath"/OpenAL32.dll ./export/windows/
+    cp -v "$lovepath"/SDL2.dll ./export/windows/
+    # do icon stuff here
+fi
+

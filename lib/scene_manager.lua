@@ -1,7 +1,30 @@
-
 -- https://love2d.org/forums/viewtopic.php?t=92877&sid=6a58e932e8ba60eea54d7632acfcdbe0
 -- user pauljessup
+------------------------------------------------------------------------------------------
+--[[ minimum scene:
 
+SceneOne = {}
+SceneOne.scene_name = "This is the scene name"
+SceneOne.description = "This is a long description of the scene"
+
+function SceneOne:init()
+end
+
+function SceneOne:focus()
+end
+
+function SceneOne:defocus()
+end
+
+function SceneOne:update(dt)
+end
+
+function SceneOne:draw()
+end
+
+return SceneOne
+
+]]
 
 ------------------------------------------------------------------------------------------
 local oldprint = print

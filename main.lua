@@ -21,6 +21,7 @@ print("\27[38;5;84m" .. garden_logo .. "\27[0m")
 
 print("-----------------------------------\ncli:")
 -- lua-local-debugger for VSCode: https://github.com/tomblind/local-lua-debugger-vscode
+
 lldebugger = nil
 local DEBUG_MODE = false
 local PROFILE = false
@@ -43,6 +44,7 @@ for k,v in pairs(arg) do
 end
 
 print("DEBUG_MODE ", DEBUG_MODE)
+
 
 ------------------------------------------------------------------------------------------
 local oldprint = print
@@ -67,11 +69,24 @@ function new_scene_selector()
     this.window = gspot:group("scene selector", {x = love.graphics.getWidth() - w - 16, y = 16, w= w, h = h })
     this.window.drag = true
     this.signals =  signal:new()
-    
+
+    -- sort scenes by name
+    local scene_names = {}
+    for k,v in pairs(Scenes.states) do
+        table.insert(scene_names, k)
+    end
+    table.sort(scene_names)
+    print("scenes:")
+    for k,v in pairs(scene_names) do
+        print("  ", v)
+    end
+
     this.buttons = {}
     local i = 0
-    for k,v in pairs(Scenes.states) do
+    -- for k,v in pairs(Scenes.states) do
+    for key,value in pairs(scene_names) do
         -- buttons
+        local k = value
         this.buttons[k] = gspot:button( k, {x=4, y=gspot.style.unit + i*20, w=this.window.pos.w-8, h = gspot.style.unit }, this.window )
         this.buttons[k].tip = Scenes.long_names[k] .. "\n--\n" .. Scenes.descriptions[k]
         this.window:addchild( this.buttons[k], 'vertical' )
@@ -104,7 +119,8 @@ function love.load()
     if CLIENT_MODE then
         Scenes:init("enet_client_test")
     else
-        Scenes:init("enet_test")
+        Scenes:init("camera_test_one")
+        -- Scenes:init("enet_test")
         -- Scenes:init("joystick_test")
     end
     scene_selector = new_scene_selector()
@@ -196,6 +212,10 @@ love.wheelmoved = function(x, y)
     gspot:mousewheel(x, y)
 end
 
+
+love.joystickaxis = function( joystick, axis, value )
+    Scenes:joystickaxis( joystick, axis, value )
+end
 
 love.keyreleased = function(key, ...)
     Scenes:keyreleased( key, ... )

@@ -8,6 +8,9 @@ A game written with LÖVE2D v11.5
 
 **Gspöt** gui module, Pedro Gimeno Fortea, Zlib/libpng license, https://notabug.org/pgimeno/Gspot
 
+**Hump camera**, Matthias Richter, license in `lib/camera.lua`, https://github.com/vrld/hump/blob/master/camera.lua
+
 **Profile.lua**, Roland Yonaba, MIT License, https://github.com/2dengine/profile.lua
 
 **cherrymelon_a_r.png** spritesheet, Ashizian, CC0 License, https://ashizian.itch.io/
+

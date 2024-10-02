@@ -1,6 +1,26 @@
 -- shaping functions
 local Shaping = {}
 
+-- TODO: add more smoothing/tweener closures. (springs, all tween styles, etc)
+
+--- A float value that tends towards a target, damped over time delta, using a closure  
+--- Initialise with:  
+--- `local zoom_damped = float_damped( 5.5, 1.0 )`  
+--- Update/call with:  
+--- `camera.scale = camera.scale * zoom_damped( <new_target_value> )`
+---@param stiffness number damping stiffnes
+---@param initial_value any initial value
+---@return function closure damping closure
+function Shaping.float_damped( stiffness, initial_value )
+    local ft = initial_value or 0.0
+    return function( aim )
+        local dts = love.timer.getDelta() * stiffness
+        ft = ft + (aim - ft) * dts
+        return ft
+    end
+end
+
+
 ---common bias
 ---@param t number value in
 ---@param b number bias amount 0.0 - 1.0. 0.5 leaves the value unchanged

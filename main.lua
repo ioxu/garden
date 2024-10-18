@@ -144,7 +144,7 @@ function love.draw()
     love.graphics.setColor(1,1,1,1)
     gspot:draw()
    
-    love.graphics.setColor(1.0,1.0,1.0,0.5)
+    love.graphics.setColor(1.0,1.0,1.0,1.0)
     love.graphics.circle("fill", love.mouse.getX(), love.mouse.getY(), 3.25)
     local fps = love.timer.getFPS()
     love.graphics.setFont(font_medium)

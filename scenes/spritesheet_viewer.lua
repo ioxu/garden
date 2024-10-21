@@ -6,6 +6,8 @@ local signal = require "lib.signal"
 local shaping = require "lib.shaping"
 local Camera = require "lib.camera"
 local camera = Camera( 0.0, 0.0 )
+local shadeix = require "lib.shadeix"
+
 ------------------------------------------------------------------------------------------
 local oldprint = print
 local print_header = "\27[38;5;75m[spritesheet_viewer\27[38;5;80m.scene\27[38;5;75m]\27[0m "
@@ -51,6 +53,9 @@ navigation.focus_tween = 0.0
 local font_small = love.graphics.newFont(10)
 local font_very_large = love.graphics.newFont(90)
 local global_time = 0.0
+local frame_count = 0
+local _last_frame_count_update = 0.0
+local _target_frame_fps = 1/25.0
 
 ------------------------------------------------------------------------------------------
 -- settings ui
@@ -122,7 +127,19 @@ function SpritesheetViewer.display_sprite_grid( value )
 end
 
 ------------------------------------------------------------------------------------------
+
+local crt_shadergraph = shadeix.Graph:new("crt_shgraph")
+
 -- canvases for shader effects
+local canvas_linearised = 
+love.graphics.newCanvas(
+    love.graphics.getWidth(),
+    love.graphics.getHeight(),
+    { ["msaa"] = 0,
+    -- ["readable"] = true,
+}
+)
+
 local canvas_one = love.graphics.newCanvas(
     love.graphics.getWidth(),
     love.graphics.getHeight(),
@@ -135,31 +152,35 @@ canvas_one:setFilter("nearest", "nearest")
 local canvas_two = love.graphics.newCanvas(
     love.graphics.getWidth(),
     love.graphics.getHeight(),
-    { ["msaa"] = 16,
+    { ["msaa"] = 0,
     -- ["readable"] = true,
 }
 )
 canvas_two:setFilter("nearest", "nearest")
 
 
-local sh_string = love.filesystem.read( "resources/shaders/blur_horizontal.frag" )
+local sh_string = love.filesystem.read( "resources/shaders/linearise.frag" )
+local linearise_shader = love.graphics.newShader( sh_string )
+linearise_shader:send("gamma", 2.2)
+
+sh_string = love.filesystem.read( "resources/shaders/blur_horizontal.frag" )
 local blur_h_shader = love.graphics.newShader( sh_string )
 
 sh_string = love.filesystem.read( "resources/shaders/blur_vertical.frag" )
 local blur_v_shader = love.graphics.newShader( sh_string )
 
-sh_string = love.filesystem.read( "resources/shaders/linearise.frag" )
-local linearise_shader = love.graphics.newShader( sh_string )
-linearise_shader:send("gamma", 2.2)
-
 sh_string = love.filesystem.read( "resources/shaders/unlinearise.frag" )
 local unlinearise_shader = love.graphics.newShader( sh_string )
 unlinearise_shader:send("gamma", 2.2)
-
 local gamma_set = true
 
--- sh_string = love.filesystem.read("other/glsl/crt-easymode-halation.frag")
--- local crt_easymode_haltion = love.graphics.newShader( sh_string )
+sh_string = love.filesystem.read( "resources/shaders/threshold.frag" )
+local threshold_shader = love.graphics.newShader( sh_string )
+threshold_shader:send("PassPrev3Texture", canvas_linearised)
+
+sh_string = love.filesystem.read("other/glsl/crt-easymode-halation.frag")
+local crt_easymode_haltion = love.graphics.newShader( sh_string )
+crt_easymode_haltion:send("PassPrev4Texture", canvas_linearised)
 
 ------------------------------------------------------------------------------------------
 -- SpriteBatch stuff
@@ -302,7 +323,17 @@ function SpritesheetViewer:update(dt)
     if not SpritesheetViewer.is_paused then
         global_time = global_time + dt
         sprite_batch_shader:send("time", global_time)
+        
+        _last_frame_count_update = _last_frame_count_update + dt
+        if _last_frame_count_update > _target_frame_fps then
+            frame_count = frame_count + 1
+            crt_easymode_haltion:send("FrameCount", frame_count)
+            _last_frame_count_update = 0.0
+        end
     end
+
+    -- frame_count = frame_count + 1
+    -- crt_easymode_haltion:send("FrameCount", frame_count)
 
     if navigation.is_panning then
         local mx, my = camera:mousePosition( )
@@ -414,29 +445,39 @@ function SpritesheetViewer:draw()
     love.graphics.setColor(1,1,1,1)
 
     -- linearise
-    love.graphics.setCanvas( canvas_two )
+    love.graphics.setCanvas( canvas_linearised )
     love.graphics.setShader( linearise_shader )
     love.graphics.draw( canvas_one )
 
     -- h blur
     love.graphics.setCanvas( canvas_one )
     love.graphics.setShader( blur_h_shader )
-    love.graphics.draw( canvas_two )
+    love.graphics.draw( canvas_linearised )
 
     -- v blur
     love.graphics.setCanvas( canvas_two )
     love.graphics.setShader( blur_v_shader )
     love.graphics.draw( canvas_one )
 
-    -- unlinearise
+    -- threshold 
     love.graphics.setCanvas( canvas_one )
-    love.graphics.setShader( unlinearise_shader )
+    love.graphics.setShader( threshold_shader )
     love.graphics.draw( canvas_two )
+
+    -- unlinearise
+    -- love.graphics.setCanvas( canvas_two )
+    -- love.graphics.setShader( unlinearise_shader )
+    -- love.graphics.draw( canvas_one )
+
+    -- crt-easymode-halation
+    love.graphics.setCanvas( canvas_two )
+    love.graphics.setShader( crt_easymode_haltion )
+    love.graphics.draw( canvas_one )
 
     -- final draw
     love.graphics.setCanvas()
     love.graphics.setShader()
-    love.graphics.draw( canvas_one )
+    love.graphics.draw( canvas_two )
     
 
 
@@ -460,18 +501,18 @@ end
 function SpritesheetViewer:keypressed(key, code, isrepeat)
     
     -- TODO temporary shader gamma control
-    if code == "g" then
-        gamma_set = not gamma_set
-        if gamma_set then
-            linearise_shader:send("gamma", 2.2)
-            unlinearise_shader:send("gamma", 2.2)            
-            print("un/linearise_shader:send('gamma', 2.2)")
-        else
-            linearise_shader:send("gamma", 1.0)
-            unlinearise_shader:send("gamma", 1.0)            
-            print("un/linearise_shader:send('gamma', 1.0)")
-        end
-    end
+    -- if code == "g" then
+    --     gamma_set = not gamma_set
+    --     if gamma_set then
+    --         linearise_shader:send("gamma", 2.2)
+    --         unlinearise_shader:send("gamma", 2.2)            
+    --         print("un/linearise_shader:send('gamma', 2.2)")
+    --     else
+    --         linearise_shader:send("gamma", 1.0)
+    --         unlinearise_shader:send("gamma", 1.0)            
+    --         print("un/linearise_shader:send('gamma', 1.0)")
+    --     end
+    -- end
 
     if code == "space" then
         SpritesheetViewer.is_paused = not SpritesheetViewer.is_paused

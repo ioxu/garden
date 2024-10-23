@@ -6,7 +6,7 @@ local signal = require "lib.signal"
 local shaping = require "lib.shaping"
 local Camera = require "lib.camera"
 local camera = Camera( 0.0, 0.0 )
-local shadeix = require "lib.shadeix"
+-- local shadeix = require "lib.shadeix"
 
 ------------------------------------------------------------------------------------------
 local oldprint = print
@@ -128,7 +128,15 @@ end
 
 ------------------------------------------------------------------------------------------
 
-local crt_shadergraph = shadeix.Graph:new("crt_shgraph")
+-- local crt_shgraph = shadeix.Graph:new("crt_shgraph")
+-- local linearise_shnode = crt_shgraph:add_node( "linearise", "resources/shaders/linearise.frag" )
+-- local blur_h_shnode = crt_shgraph:add_node( "blur h", "resources/shaders/blur_horizontal.frag" )
+-- local blur_v_shnode = crt_shgraph:add_node( "blur v", "resources/shaders/blur_vertical.frag" )
+-- local threshold_shnode = crt_shgraph:add_node( "threshold", "resources/shaders/threshold.frag" )
+-- local crt_easymode_halation_shnode = crt_shgraph:add_node( "crt-easymode-halation", "other/glsl/crt-easymode-halation.frag" )
+-- print("crt_shgraph: ", crt_shgraph)
+-- crt_shgraph:print_graph()
+
 
 -- canvases for shader effects
 local canvas_linearised = 
@@ -163,6 +171,7 @@ local sh_string = love.filesystem.read( "resources/shaders/linearise.frag" )
 local linearise_shader = love.graphics.newShader( sh_string )
 linearise_shader:send("gamma", 2.2)
 
+
 sh_string = love.filesystem.read( "resources/shaders/blur_horizontal.frag" )
 local blur_h_shader = love.graphics.newShader( sh_string )
 
@@ -178,7 +187,7 @@ sh_string = love.filesystem.read( "resources/shaders/threshold.frag" )
 local threshold_shader = love.graphics.newShader( sh_string )
 threshold_shader:send("PassPrev3Texture", canvas_linearised)
 
-sh_string = love.filesystem.read("other/glsl/crt-easymode-halation.frag")
+sh_string = love.filesystem.read("resources/shaders/crt-easymode-halation.frag")
 local crt_easymode_haltion = love.graphics.newShader( sh_string )
 crt_easymode_haltion:send("PassPrev4Texture", canvas_linearised)
 
@@ -327,6 +336,7 @@ function SpritesheetViewer:update(dt)
         _last_frame_count_update = _last_frame_count_update + dt
         if _last_frame_count_update > _target_frame_fps then
             frame_count = frame_count + 1
+            -- print( frame_count )
             crt_easymode_haltion:send("FrameCount", frame_count)
             _last_frame_count_update = 0.0
         end

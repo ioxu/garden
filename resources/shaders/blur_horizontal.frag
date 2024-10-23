@@ -1,8 +1,8 @@
-#define GLOW_FALLOFF 0.35//0.35
-#define TAPS 4.
+#define GLOW_FALLOFF 0.15//0.35//0.35
+#define TAPS 8.
 #define kernel(x) exp(-GLOW_FALLOFF * (x) * (x))
 
-#define SCREEN_WIDTH 1600.
+#define SCREEN_WIDTH love_ScreenSize.x
 vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords){
 	vec3 col = vec3(0.0);
 	float dx = 1.0/SCREEN_WIDTH;

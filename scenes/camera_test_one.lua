@@ -4,6 +4,19 @@ CameraTestOne.description = "a test for moving a camera interactively"
 
 local vector = require "lib.vector"
 local shaping = require "lib.shaping"
+local shadeix = require "lib.shadeix"
+
+------------------------------------------------------------------------------------------
+local oldprint = print
+local print_header = "\27[38;5;35m[camera_test]\27[0m "
+local function print(...)
+    local result = ""
+    for i,v in pairs( {...} ) do
+        result = result .. tostring(v)
+    end
+    oldprint( print_header .. result )
+end
+------------------------------------------------------------------------------------------
 
 local joystick_diagram = require "lib.joystick_diagram"
 local joysticks = love.joystick.getJoysticks()
@@ -11,6 +24,10 @@ local joystick = joysticks[1]
 
 local Camera = require "lib.camera"
 local camera
+
+local global_frame = 0.0
+local _last_frame_count_update = 0.0
+local _target_frame_fps = 1/25.0
 
 local _sprite_sheet = love.graphics.newImage( "resources/sprites/cherrymelon_a_r.png" )
 _sprite_sheet:setFilter( "nearest", "nearest")
@@ -73,7 +90,41 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
 }
 ]]
 
+------------------------------------------------------------------------------------------
+-- post processing
 
+local base_canvas = love.graphics.newCanvas(
+    love.graphics.getWidth(),
+    love.graphics.getHeight(),
+    {["msaa"] = 16,}
+)
+
+print("building post-processes")
+
+local crt_shgraph = shadeix.Graph:new("crt_shgraph", base_canvas)
+local linearise_shnode = crt_shgraph:add_node( "linearise", "resources/shaders/linearise.frag" )
+linearise_shnode:stash_canvas( love.graphics.getWidth(), love.graphics.getHeight(), {} )
+linearise_shnode.shader:send("gamma", 2.2)
+local blur_h_shnode = crt_shgraph:add_node( "blur h", "resources/shaders/blur_horizontal.frag" )
+local blur_v_shnode = crt_shgraph:add_node( "blur v", "resources/shaders/blur_vertical.frag" )
+local threshold_shnode = crt_shgraph:add_node( "threshold", "resources/shaders/threshold.frag" )
+-- threshold_shnode:stash_canvas( love.graphics.getWidth(), love.graphics.getHeight(), {} )
+threshold_shnode.shader:send( "PassPrev3Texture", linearise_shnode.canvas )
+local crt_easymode_halation_shnode = crt_shgraph:add_node( "crt-easymode-halation", "resources/shaders/crt-easymode-halation.frag" )
+crt_easymode_halation_shnode.shader:send( "PassPrev4Texture", linearise_shnode.canvas )
+crt_shgraph:print_graph()
+
+
+-- crt_shgraph:print_buffers()
+-- crt_shgraph:flip()
+-- crt_shgraph:print_buffers()
+-- crt_shgraph:flip()
+-- crt_shgraph:print_buffers()
+-- crt_shgraph:flip()
+-- crt_shgraph:print_buffers()
+-- crt_shgraph:flip()
+
+------------------------------------------------------------------------------------------
 local test_shader = love.graphics.newShader( rgb2hsv_fragment .. grid_fragment )
 
 
@@ -98,7 +149,20 @@ local js_ry
 local rot_damped = shaping.float_damped( 5.5 )
 local zoom_damped = shaping.float_damped( 5.5, 1.0 )
 
+local crt_node = crt_shgraph:get_node("crt-easymode-halation")
+
 function CameraTestOne:update(dt)
+    
+    _last_frame_count_update = _last_frame_count_update + dt
+    if _last_frame_count_update > _target_frame_fps then
+        global_frame = global_frame + 1.0
+        crt_node.shader:send("FrameCount", global_frame)
+        _last_frame_count_update = 0.0
+    end
+
+
+    -- print(tostring(node) .." ".. global_frame)
+
     js_lx = joystick:getGamepadAxis( "leftx" )
     js_ly = joystick:getGamepadAxis( "lefty" )
 
@@ -152,6 +216,9 @@ end
 local wmargin = 15.0
 function CameraTestOne:draw()
     love.graphics.setShader()
+    
+    love.graphics.setCanvas( base_canvas )
+    
     camera:attach()
 
     love.graphics.setColor(1.0, 1.0, 1.0, 1.0)
@@ -189,6 +256,15 @@ function CameraTestOne:draw()
     camera:detach()
 
     joystick_diagram.draw_PS4Controller_diagram( joystick , 1300, 825)
+
+    love.graphics.setCanvas()
+
+
+    crt_shgraph:draw(base_canvas)
+    -- love.graphics.clear()
+    -- love.graphics.draw(threshold_shnode.canvas)
+
+    -- love.graphics.draw( base_canvas )
 end
 
 

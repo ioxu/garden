@@ -78,7 +78,7 @@ It's useful when you're working with multi-pass shaders, where the output of one
 // }
 
 // #elif defined(FRAGMENT)
-
+#ifdef PIXEL
 // #if __VERSION__ >= 130
 // #define COMPAT_VARYING in
 // #define COMPAT_TEXTURE texture
@@ -369,4 +369,5 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 //    FragColor = vec4(col, 1.0);
    return vec4(col, 1.0);
 } 
-// #endif
+
+#endif

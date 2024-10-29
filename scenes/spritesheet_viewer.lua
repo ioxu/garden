@@ -151,11 +151,16 @@ love.graphics.newCanvas(
 local canvas_one = love.graphics.newCanvas(
     love.graphics.getWidth(),
     love.graphics.getHeight(),
-    { ["msaa"] = 16,
-    -- ["readable"] = true,
+    { ["msaa"] = 0,
+    ["readable"] = true,
+    ["mipmaps"] = "auto",
 }
 )
-canvas_one:setFilter("nearest", "nearest")
+
+canvas_one:generateMipmaps()
+canvas_one:setMipmapFilter("linear")--, -3.0)
+-- canvas_one:setFilter("nearest", "nearest")
+
 
 local canvas_two = love.graphics.newCanvas(
     love.graphics.getWidth(),
@@ -170,7 +175,7 @@ canvas_two:setFilter("nearest", "nearest")
 local sh_string = love.filesystem.read( "resources/shaders/linearise.frag" )
 local linearise_shader = love.graphics.newShader( sh_string )
 linearise_shader:send("gamma", 2.2)
-
+-- linearise_shader:send("mainTex", canvas_one)
 
 sh_string = love.filesystem.read( "resources/shaders/blur_horizontal.frag" )
 local blur_h_shader = love.graphics.newShader( sh_string )
@@ -363,6 +368,7 @@ function SpritesheetViewer:update(dt)
         navigation.focus_tween = navigation._focus_damped(0.0)
     end
 
+    linearise_shader:send("mipBias", shaping.remap(navigation.focus_tween, 0.0, 1.0, 0.0, 5.0) )
 end
 
 
@@ -508,9 +514,9 @@ function SpritesheetViewer:draw()
     end    
 end
 
+
 function SpritesheetViewer:keypressed(key, code, isrepeat)
     
-    -- TODO temporary shader gamma control
     -- if code == "g" then
     --     gamma_set = not gamma_set
     --     if gamma_set then
@@ -523,6 +529,10 @@ function SpritesheetViewer:keypressed(key, code, isrepeat)
     --         print("un/linearise_shader:send('gamma', 1.0)")
     --     end
     -- end
+
+    if code == "f" then
+        navigation.focus = not navigation.focus
+    end
 
     if code == "space" then
         SpritesheetViewer.is_paused = not SpritesheetViewer.is_paused

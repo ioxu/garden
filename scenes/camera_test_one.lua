@@ -165,6 +165,7 @@ end
 
 local wmargin = 15.0
 function CameraTestOne:draw()
+    love.graphics.clear()
     love.graphics.setShader()
     
     love.graphics.setCanvas( base_canvas )

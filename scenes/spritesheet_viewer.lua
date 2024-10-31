@@ -5,6 +5,7 @@ SpritesheetViewer.description = "Test for viewing a spritesheet, and experimenti
 local signal = require "lib.signal"
 local shaping = require "lib.shaping"
 local Camera = require "lib.camera"
+local shadeix = require "lib.shadeix"
 local camera = Camera( 0.0, 0.0 )
 -- local shadeix = require "lib.shadeix"
 
@@ -19,8 +20,10 @@ local function print(...)
     oldprint( print_header .. result )
 end
 ------------------------------------------------------------------------------------------
-SpritesheetViewer.spritesheet_image = love.graphics.newImage( "resources/sprites/cherrymelon_a_r.png" )
+SpritesheetViewer.spritesheet_image = love.graphics.newImage( "resources/sprites/cherrymelon_a_r.png", {["mipmaps"] = true,} )
 SpritesheetViewer.spritesheet_image:setFilter( "linear", "nearest" )
+-- SpritesheetViewer.spritesheet_image:setMipmapFilter( "linear", 0 )
+
 print(string.format("%sx%s (%s)",
     SpritesheetViewer.spritesheet_image:getPixelWidth(),
     SpritesheetViewer.spritesheet_image:getPixelHeight(),
@@ -42,9 +45,11 @@ navigation.pan_dx = 0.0
 navigation.pan_last_y = 0.0
 navigation.pan_dy = 0.0
 navigation.zoom = 1.0
+navigation._zoom_damped = shaping.float_damped( 10.5, 1.0 )
+navigation._target_zoom = 1.0
 
 navigation.focus = false -- focusing spritebatch vs spritesheet
-navigation._focus_damped = shaping.float_damped( 3.5, 0.0 )
+navigation._focus_damped = shaping.float_damped( 3.5, 0.0 ) --3.5, 0.0 )
 navigation.focus_tween = 0.0
 
 
@@ -53,7 +58,8 @@ navigation.focus_tween = 0.0
 local font_small = love.graphics.newFont(10)
 local font_very_large = love.graphics.newFont(90)
 local global_time = 0.0
-local frame_count = 0
+-- local frame_count = 0
+local global_frame = 0
 local _last_frame_count_update = 0.0
 local _target_frame_fps = 1/25.0
 
@@ -127,28 +133,60 @@ function SpritesheetViewer.display_sprite_grid( value )
 end
 
 ------------------------------------------------------------------------------------------
+-- local _sh_string = 
+local mipbias_blur_shader = love.graphics.newShader( "resources/shaders/mipbias_blur.frag" )
+local shader_max_blur = 5.5
 
--- local crt_shgraph = shadeix.Graph:new("crt_shgraph")
--- local linearise_shnode = crt_shgraph:add_node( "linearise", "resources/shaders/linearise.frag" )
--- local blur_h_shnode = crt_shgraph:add_node( "blur h", "resources/shaders/blur_horizontal.frag" )
--- local blur_v_shnode = crt_shgraph:add_node( "blur v", "resources/shaders/blur_vertical.frag" )
--- local threshold_shnode = crt_shgraph:add_node( "threshold", "resources/shaders/threshold.frag" )
--- local crt_easymode_halation_shnode = crt_shgraph:add_node( "crt-easymode-halation", "other/glsl/crt-easymode-halation.frag" )
--- print("crt_shgraph: ", crt_shgraph)
--- crt_shgraph:print_graph()
+--- crt post shader
+local crt_shgraph = shadeix.Graph:new("crt_shgraph", bg_canvas)
+local linearise_shnode = crt_shgraph:add_node( "linearise", "resources/shaders/linearise.frag" )
+linearise_shnode:stash_canvas( love.graphics.getWidth(), love.graphics.getHeight(), {} )
+linearise_shnode.shader:send("gamma", 2.2)
+local blur_h_shnode = crt_shgraph:add_node( "blur h", "resources/shaders/blur_horizontal.frag" )
+local blur_v_shnode = crt_shgraph:add_node( "blur v", "resources/shaders/blur_vertical.frag" )
+local threshold_shnode = crt_shgraph:add_node( "threshold", "resources/shaders/threshold.frag" )
+-- threshold_shnode:stash_canvas( love.graphics.getWidth(), love.graphics.getHeight(), {} )
+threshold_shnode.shader:send( "PassPrev3Texture", linearise_shnode.canvas )
+local crt_easymode_halation_shnode = crt_shgraph:add_node( "crt-easymode-halation", "resources/shaders/crt-easymode-halation.frag" )
+crt_easymode_halation_shnode.shader:send( "PassPrev4Texture", linearise_shnode.canvas )
+crt_shgraph:print_graph()
 
 
--- canvases for shader effects
-local canvas_linearised = 
-love.graphics.newCanvas(
+local bg_canvas = love.graphics.newCanvas(
     love.graphics.getWidth(),
     love.graphics.getHeight(),
-    { ["msaa"] = 0,
-    -- ["readable"] = true,
+    { ["msaa"] = 16,
+    ["readable"] = true,
+    -- ["mipmaps"] = "auto",
 }
 )
 
-local canvas_one = love.graphics.newCanvas(
+
+local bg_mip_canvas = love.graphics.newCanvas(
+    love.graphics.getWidth(),
+    love.graphics.getHeight(),
+    { ["msaa"] = 0,
+    ["readable"] = true,
+    ["mipmaps"] = "auto",
+    ["format"] = "rgba16f",
+}
+)
+
+bg_mip_canvas:generateMipmaps()
+bg_mip_canvas:setMipmapFilter("linear")
+
+
+local fg_canvas = love.graphics.newCanvas(
+    love.graphics.getWidth(),
+    love.graphics.getHeight(),
+    { ["msaa"] = 16,
+    ["readable"] = true,
+    -- ["mipmaps"] = "auto",
+}
+)
+
+
+local fg_mip_canvas = love.graphics.newCanvas(
     love.graphics.getWidth(),
     love.graphics.getHeight(),
     { ["msaa"] = 0,
@@ -157,44 +195,30 @@ local canvas_one = love.graphics.newCanvas(
 }
 )
 
-canvas_one:generateMipmaps()
-canvas_one:setMipmapFilter("linear")--, -3.0)
--- canvas_one:setFilter("nearest", "nearest")
+
+fg_mip_canvas:generateMipmaps()
+fg_mip_canvas:setMipmapFilter("linear")
 
 
-local canvas_two = love.graphics.newCanvas(
+local combined_canvas = love.graphics.newCanvas(
     love.graphics.getWidth(),
-    love.graphics.getHeight(),
-    { ["msaa"] = 0,
-    -- ["readable"] = true,
-}
+    love.graphics.getHeight()
 )
-canvas_two:setFilter("nearest", "nearest")
 
 
-local sh_string = love.filesystem.read( "resources/shaders/linearise.frag" )
-local linearise_shader = love.graphics.newShader( sh_string )
-linearise_shader:send("gamma", 2.2)
--- linearise_shader:send("mainTex", canvas_one)
+--[[
+set linearisation shader
+draw fg canvas
+set blur shader
+draw fg canvas
 
-sh_string = love.filesystem.read( "resources/shaders/blur_horizontal.frag" )
-local blur_h_shader = love.graphics.newShader( sh_string )
+set linearisation shader
+draw bg canvas
+set blur shader
+draw bg canvas
+]]
 
-sh_string = love.filesystem.read( "resources/shaders/blur_vertical.frag" )
-local blur_v_shader = love.graphics.newShader( sh_string )
 
-sh_string = love.filesystem.read( "resources/shaders/unlinearise.frag" )
-local unlinearise_shader = love.graphics.newShader( sh_string )
-unlinearise_shader:send("gamma", 2.2)
-local gamma_set = true
-
-sh_string = love.filesystem.read( "resources/shaders/threshold.frag" )
-local threshold_shader = love.graphics.newShader( sh_string )
-threshold_shader:send("PassPrev3Texture", canvas_linearised)
-
-sh_string = love.filesystem.read("resources/shaders/crt-easymode-halation.frag")
-local crt_easymode_haltion = love.graphics.newShader( sh_string )
-crt_easymode_haltion:send("PassPrev4Texture", canvas_linearised)
 
 ------------------------------------------------------------------------------------------
 -- SpriteBatch stuff
@@ -333,23 +357,24 @@ function SpritesheetViewer:defocus()
 end
 
 
+local crt_node = crt_shgraph:get_node("crt-easymode-halation")
+local stats_str = ""
+
 function SpritesheetViewer:update(dt)
     if not SpritesheetViewer.is_paused then
         global_time = global_time + dt
         sprite_batch_shader:send("time", global_time)
-        
-        _last_frame_count_update = _last_frame_count_update + dt
-        if _last_frame_count_update > _target_frame_fps then
-            frame_count = frame_count + 1
-            -- print( frame_count )
-            crt_easymode_haltion:send("FrameCount", frame_count)
-            _last_frame_count_update = 0.0
-        end
     end
 
-    -- frame_count = frame_count + 1
-    -- crt_easymode_haltion:send("FrameCount", frame_count)
+    -- animate shader scanline
+    _last_frame_count_update = _last_frame_count_update + dt
+    if _last_frame_count_update > _target_frame_fps then
+        global_frame = global_frame + 1.0
+        crt_node.shader:send("FrameCount", global_frame)
+        _last_frame_count_update = 0.0
+    end
 
+    -- panning
     if navigation.is_panning then
         local mx, my = camera:mousePosition( )
 
@@ -362,24 +387,50 @@ function SpritesheetViewer:update(dt)
         navigation.pan_last_y = cy
     end
 
+    -- focus
     if navigation.focus then
         navigation.focus_tween = navigation._focus_damped(1.0)
     else
         navigation.focus_tween = navigation._focus_damped(0.0)
     end
 
-    linearise_shader:send("mipBias", shaping.remap(navigation.focus_tween, 0.0, 1.0, 0.0, 5.0) )
+    -- zoom
+    navigation.zoom = navigation._zoom_damped( navigation._target_zoom )
+    camera:zoomTo( navigation.zoom )
+
+    local stats = love.graphics.getStats()
+    stats_str = string.format(
+[[drawcalls: %s
+canvas switches: %s
+texture memory: %.2fMB
+images: %s
+fonts: %s
+shader switches: %s
+draw calls batched: %s
+]],
+stats["drawcalls"],
+stats["canvasswitches"],
+stats["texturememory"] /1024/1024,
+stats["images"],
+stats["fonts"],
+stats["shaderswitches"],
+stats["drawcallsbatched"])
+
 end
 
 
 local dw = tonumber(control_ui.sprite_division_width.value)
 local dh = tonumber(control_ui.sprite_division_height.value)
 
+
 function SpritesheetViewer:draw()
-
-    love.graphics.setCanvas( canvas_one )
-
     love.graphics.clear(0.05, 0.05, 0.05, 1.0)
+    
+    
+    ----------------------------------------------------------------------------
+    -- bg
+    love.graphics.setCanvas( bg_canvas )
+    love.graphics.clear()
     love.graphics.setColor(1,1,1,1)
     
     local a = shaping.remap( navigation.focus_tween, 0.0, 1.0, 0.35, 1.0 )
@@ -396,8 +447,12 @@ function SpritesheetViewer:draw()
         love.graphics.getHeight()*_layout_spread /2.0
     )
 
-    love.graphics.setShader( )
+    love.graphics.setShader()
+    love.graphics.setCanvas()
     ----------------------------------------------------------------------------
+    -- fg
+    love.graphics.setCanvas( fg_canvas )
+    love.graphics.clear()
     camera:attach()
     
     local a = shaping.remap( navigation.focus_tween, 0.0, 1.0, 1.0, 0.0 )
@@ -418,8 +473,8 @@ function SpritesheetViewer:draw()
             control_ui.sprite_division_height.value then
             -- control_ui.sprite_division_width
             -- control_ui.sprite_division_height
-            love.graphics.setColor(1.0, 0.5, 0.0, 0.5 * a )
-            love.graphics.setLineWidth( 1/camera.scale )
+            love.graphics.setColor(1.0, 0.5, 0.0, 0.75 * a )
+            love.graphics.setLineWidth( 2/camera.scale )
 
 
             dw = tonumber(control_ui.sprite_division_width.value)
@@ -454,49 +509,60 @@ function SpritesheetViewer:draw()
     end
 
     camera:detach()
+    
     ----------------------------------------------------------------------------
-
     love.graphics.setCanvas()
-    love.graphics.setShader()
+    love.graphics.clear()
     love.graphics.setColor(1,1,1,1)
-
-    -- linearise
-    love.graphics.setCanvas( canvas_linearised )
-    love.graphics.setShader( linearise_shader )
-    love.graphics.draw( canvas_one )
-
-    -- h blur
-    love.graphics.setCanvas( canvas_one )
-    love.graphics.setShader( blur_h_shader )
-    love.graphics.draw( canvas_linearised )
-
-    -- v blur
-    love.graphics.setCanvas( canvas_two )
-    love.graphics.setShader( blur_v_shader )
-    love.graphics.draw( canvas_one )
-
-    -- threshold 
-    love.graphics.setCanvas( canvas_one )
-    love.graphics.setShader( threshold_shader )
-    love.graphics.draw( canvas_two )
-
-    -- unlinearise
-    -- love.graphics.setCanvas( canvas_two )
-    -- love.graphics.setShader( unlinearise_shader )
-    -- love.graphics.draw( canvas_one )
-
-    -- crt-easymode-halation
-    love.graphics.setCanvas( canvas_two )
-    love.graphics.setShader( crt_easymode_haltion )
-    love.graphics.draw( canvas_one )
-
-    -- final draw
-    love.graphics.setCanvas()
     love.graphics.setShader()
-    love.graphics.draw( canvas_two )
+    
+    -- draw fg and bg canvases to mipmap canvases through
+    -- a linearisation shader
+    linearise_shnode.shader:send("gamma", 2.2)
+    love.graphics.setShader(linearise_shnode.shader)
+    
+    love.graphics.setCanvas(bg_mip_canvas)
+    love.graphics.clear()
+    love.graphics.draw(bg_canvas)
+    
+    love.graphics.setCanvas( fg_mip_canvas )
+    love.graphics.clear()
+    love.graphics.draw(fg_canvas)
     
 
+    -- combine layers on combiner canvas
+    love.graphics.setCanvas( combined_canvas )
+    love.graphics.clear()
+    -- ################### set shader to a mipmap blur ####
+    love.graphics.setShader( mipbias_blur_shader )
+    mipbias_blur_shader:send( "mipBias", shaping.remap( navigation.focus_tween, 0.0, 1.0, shader_max_blur, 0.0 ) )
+    -- ####################################################
+    love.graphics.draw( bg_mip_canvas )
+    love.graphics.setBlendMode("alpha", "premultiplied")
+    mipbias_blur_shader:send( "mipBias", shaping.remap( navigation.focus_tween, 0.0, 1.0, 0.0, shader_max_blur*3 ) )
+    love.graphics.draw( fg_mip_canvas )
+    love.graphics.setShader()
 
+    --
+    -- shouldn't have to do this, but the combined_canvas will be lineraised
+    -- so have to un-linearise so that the crt chain can do it's own re-linearising!!
+    love.graphics.setCanvas(fg_canvas)
+    love.graphics.clear()
+    love.graphics.setBlendMode("alpha")
+    love.graphics.setShader(linearise_shnode.shader)
+    linearise_shnode.shader:send("gamma", 0.4545)
+    love.graphics.draw( combined_canvas )
+    
+    love.graphics.print( stats_str, 50, 50, 0, 2, 2)
+
+    love.graphics.setShader()
+    love.graphics.setCanvas()
+    
+    --
+    linearise_shnode.shader:send("gamma", 2.2)
+    crt_shgraph:draw( fg_canvas )
+    -- love.graphics.draw( fg_canvas )
+    ----------------------------------------------------------------------------
 
     love.graphics.setFont(font_small)
     local mx, my = love.mouse.getPosition()
@@ -505,7 +571,6 @@ function SpritesheetViewer:draw()
     love.graphics.rectangle( "fill", mx, my-10, 75, 20 )
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print(string.format("tile: %s, %s", math.floor(mwx/dw), math.floor(mwy/dh) ), mx+15, my-7.5 )
-
 
     if SpritesheetViewer.is_paused then
         love.graphics.setFont(font_very_large)
@@ -516,20 +581,6 @@ end
 
 
 function SpritesheetViewer:keypressed(key, code, isrepeat)
-    
-    -- if code == "g" then
-    --     gamma_set = not gamma_set
-    --     if gamma_set then
-    --         linearise_shader:send("gamma", 2.2)
-    --         unlinearise_shader:send("gamma", 2.2)            
-    --         print("un/linearise_shader:send('gamma', 2.2)")
-    --     else
-    --         linearise_shader:send("gamma", 1.0)
-    --         unlinearise_shader:send("gamma", 1.0)            
-    --         print("un/linearise_shader:send('gamma', 1.0)")
-    --     end
-    -- end
-
     if code == "f" then
         navigation.focus = not navigation.focus
     end
@@ -557,9 +608,10 @@ end
 
 
 function SpritesheetViewer:wheelmoved(x,y)
-    navigation.zoom = navigation.zoom * ( 1 + (y *0.1))
-    navigation.zoom = shaping.clamp( navigation.zoom, .25, 20.0 )
-    camera:zoomTo( navigation.zoom )
+    -- navigation.zoom = navigation.zoom * ( 1 + (y *0.1))
+    -- navigation.zoom = shaping.clamp( navigation.zoom, .25, 20.0 )
+    navigation._target_zoom = navigation._target_zoom * ( 1 + (y *0.1))
+    navigation._target_zoom = shaping.clamp( navigation._target_zoom, .25, 20.0 )
 end
 
 

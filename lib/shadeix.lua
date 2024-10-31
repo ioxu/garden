@@ -115,32 +115,37 @@ function Shadeix.Graph:draw( in_canvas )
     -- local previous_canvas = love.graphics.getCanvas()
     -- local previous_background_color = {love.graphics.getBackgroundColor()}
     -- local previous_color = {love.graphics.getColor()}
-
-    love.graphics.setCanvas()
+    
+    self.in_canvas = in_canvas
     love.graphics.setColor( 1,1,1,1 )
     
-    -- print("---")
-
     love.graphics.setCanvas(self.buffer_a)
+    love.graphics.clear()
     local next_draw_canvas = in_canvas
     for k,v in pairs(self.nodes) do
-
-        -- print(v.name)
         love.graphics.setShader( v.shader )
         love.graphics.draw( next_draw_canvas )
+        
+        -- if this node has a stashed canvas
+        -- draw to it also
         if v.canvas then
             love.graphics.setCanvas( v.canvas )
+            love.graphics.clear()
             love.graphics.draw( next_draw_canvas )
         end
+
         self:flip()
         love.graphics.setCanvas( self.buffer_a )
+        love.graphics.clear()
         next_draw_canvas = self.buffer_b
     end
-
-    love.graphics.setCanvas()
     
+    love.graphics.setCanvas()
     love.graphics.setShader()
-    love.graphics.draw( self.buffer_b )
+    love.graphics.clear()
+    
+    
+    love.graphics.draw( next_draw_canvas ) --self.buffer_b )
     
     -- love.graphics.setBlendMode( previous_blend_mode, previous_alpha_mode )
     -- love.graphics.setCanvas( previous_canvas )

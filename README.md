@@ -14,3 +14,4 @@ A game written with LÖVE2D v11.5
 
 **cherrymelon_a_r.png** spritesheet, Ashizian, CC0 License, https://ashizian.itch.io/
 
+**crt-easymode-halation** glsl shader by Easymode, and the Libretro project, GPL License, https://github.com/libretro/slang-shaders/blob/master/crt/shaders/crt-easymode.slang etc ..

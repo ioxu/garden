@@ -41,6 +41,18 @@ function Shaping.remap( value, start1, stop1, start2, stop2)
     return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1))
 end
 
+
+---remap one range to another, clamps at output values
+---@param value number
+---@param start1 number
+---@param stop1 number
+---@param start2 number
+---@param stop2 number
+---@return number
+function Shaping.remapc( value, start1, stop1, start2, stop2)
+    return Shaping.clamp(start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1)), start2, stop2)
+end
+
 ---comment
 ---@param t1 table
 ---@param t2 table

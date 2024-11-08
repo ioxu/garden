@@ -22,6 +22,22 @@ end
 function SceneOne:draw()
 end
 
+function SceneOne:keypressed(key, code, isrepeat)
+end
+
+function SceneOne:keyreleased(key, code, isrepeat)
+end
+
+function SceneOne:mousepressed(x,y,button)
+end
+
+function SceneOne:mousereleased(x,y,button)
+end
+
+function SceneOne:wheelmoved(x,y)
+end
+
+
 return SceneOne
 
 ]]
@@ -50,17 +66,27 @@ return{
         for i,v in ipairs(love.filesystem.getDirectoryItems("scenes")) do
             if string.find(v, ".lua") then
                 print(string.format("found %s", v))
-                local state_name = string.gsub(v, ".lua", "")
-              self.states[state_name]=require("scenes." .. string.gsub(v, ".lua", ""))
-                if self.states[state_name].description then
-                    self.descriptions[state_name] = self.states[state_name].description
+                local state_name = string.gsub(v, ".lua", "")                self.states[state_name]=require("scenes." .. string.gsub(v, ".lua", ""))
+                
+                -- if the required scene name is an empty.lua file, require will return true
+                -- if so, then skip reading from the module
+                if self.states[state_name] ~= true then
+                    if self.states[state_name].description then
+                        self.descriptions[state_name] = self.states[state_name].description
+                    else
+                        self.descriptions[state_name] = "--"
+                    end
+                    if self.states[state_name].scene_name then
+                        self.long_names[state_name] = self.states[state_name].scene_name
+                    else
+                        self.long_names[state_name] = "--"
+                    end
                 else
-                    self.descriptions[state_name] = "--"
-                end
-                if self.states[state_name].scene_name then
-                    self.long_names[state_name] = self.states[state_name].scene_name
-                else
-                    self.long_names[state_name] = "--"
+                    self.states[state_name] = {}
+                    self.states[state_name].description = v
+                    self.descriptions[state_name] = v
+                    self.states[state_name].scene_name = v
+                    self.long_names[state_name] = v
                 end
             end
         end

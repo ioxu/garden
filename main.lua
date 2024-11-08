@@ -119,7 +119,8 @@ function love.load()
     if CLIENT_MODE then
         Scenes:init("enet_client_test")
     else
-        Scenes:init("spritesheet_viewer")
+        Scenes:init("isolines")
+        -- Scenes:init("spritesheet_viewer")
         -- Scenes:init("camera_test_one")
         -- Scenes:init("enet_test")
         -- Scenes:init("joystick_test")
@@ -155,11 +156,15 @@ function love.draw()
         love.graphics.setFont(font_medium)
         love.graphics.print( "DEBUG", love.graphics.getWidth() /2 - 35, 20 )
         love.graphics.setFont(font_small)
-        love.graphics.print( "(ctrl-F4 to breakpoint)", love.graphics.getWidth() /2 - 53, 44 )        
+        love.graphics.print( "(ctrl-F4 to breakpoint)", love.graphics.getWidth() /2 - 53, 44 )
     end
+
+    love.graphics.setFont(font_small)
+
     if PROFILE then
         print(love.report)
     end
+    love.graphics.setColor(1.0,1.0,1.0,1.0)
 end
 
 

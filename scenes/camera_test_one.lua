@@ -206,7 +206,10 @@ function CameraTestOne:draw()
 
     camera:detach()
 
-    joystick_diagram.draw_PS4Controller_diagram( joystick , 1300, 825)
+    -- joystick_diagram.draw_PS4Controller_diagram( joystick , 1300, 825)
+    joystick_diagram.draw_PS4Controller_diagram( joystick,
+        love.graphics.getWidth() - 400,
+        love.graphics.getHeight() - 200)
 
     love.graphics.setCanvas()
 

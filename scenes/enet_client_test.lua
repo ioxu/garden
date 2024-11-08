@@ -39,6 +39,8 @@ this_player.move_speed = 300
 ------------------------------------------------------------------------------------------
 
 local EnetClientTest = {}
+EnetClientTest.scene_name = "Enet Client Test scene"
+EnetClientTest.description = "test for connecting a client to the enet server test scene enet_test.lua"
 local client = net.Client:new("Benny")
 
 local main_menu = client_ui.main_menu()

@@ -119,7 +119,8 @@ function love.load()
     if CLIENT_MODE then
         Scenes:init("enet_client_test")
     else
-        Scenes:init("isolines")
+        Scenes:init("threads")
+        -- Scenes:init("isolines")
         -- Scenes:init("spritesheet_viewer")
         -- Scenes:init("camera_test_one")
         -- Scenes:init("enet_test")

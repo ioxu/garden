@@ -12,7 +12,6 @@ local ch_name = ...
 
 local res = 0
 local r_length = math.random(100) *100000000
-print(r_length)
 for i = 1, r_length do
     res = i*i
 end
@@ -55,21 +54,39 @@ function Job:new( name )
     return self
 end
 
+function Job:start( jobname )
+    self.thread:start( jobname )
+    if self.thread:isRunning() then
+        self.state = "RUNNING"
+    end
+end
+
+function Job:update(dt)
+    local msg = self.channel:pop()
+    if msg then
+        print(self.name, ":", msg)
+        if self.state == "RUNNING" then
+            self.state = "FINISHED"
+        end
+    end
+end
+
 
 function Job:draw( x_off, y_off )
-    love.graphics.rectangle("line", x_off, y_off, self.width, self.height)
     if self.state == "UNSTARTED" then
         love.graphics.setColor(1,1,1,0.25)
     elseif self.state == "RUNNING" then
         love.graphics.setColor(0,1,0,0.75)
     elseif self.state == "FINISHED" then
-        love.graphics.setColor(0.25,0.25,1.0,0.5)
+        love.graphics.setColor(0.25,0.6,1.0,0.75)
     end
+    love.graphics.rectangle("line", x_off, y_off, self.width, self.height)
+    love.graphics.print(self.name, x_off+1, y_off+1, 0, 0.25, 0.25)
 end
 
 
 local jobs = {}
-jobs.max_concurrent_jobs = 10
+jobs.max_concurrent_jobs = 15
 jobs.jobs = {}
 
 
@@ -92,12 +109,11 @@ end
 
 job_display.draw = function ()
     local self = job_display
-    love.graphics.setLineWidth(0.5)
+    love.graphics.setLineWidth(0.1)
     love.graphics.setColor(1,1,1,0.25)
     local job_index = 1
-    for x = 1, job_display.width do
-        for y = 1, job_display.height do
-
+    for y = 0, job_display.height -1 do
+        for x = 0, job_display.width -1 do
             local this_job = jobs.jobs[job_index]
             this_job:draw(self.origin[1] + (x * (this_job.width + self.margin)),
                 self.origin[2] + (y * (this_job.height + self.margin))
@@ -115,10 +131,13 @@ function Threads:init()
         job_display.origin[2] + ((job_display.height * (job_display.box_height + job_display.margin) ))/2.0
     )
 
-    for i = 1,10 do
+    for i = 1,jobs.max_concurrent_jobs do
         local this_job = jobs.jobs[i]
-        this_job.thread:start( this_job.name )
+        -- this_job.thread:start( this_job.name )
+        print("starting job ", i, " ", this_job.name)
+        this_job:start( this_job.name )
     end
+    print("jobs_started")
 end
 
 function Threads:focus()
@@ -130,12 +149,8 @@ end
 function Threads:update(dt)
     navigation_camera.update(dt)
 
-    for i = 1,10 do
-        local this_job = jobs.jobs[i]
-        local msg = this_job.channel:pop()
-        if msg then
-            print(this_job.name, ":", msg)
-        end
+    for i = 1,jobs.max_concurrent_jobs do
+        jobs.jobs[i]:update(dt)
     end
 
 end

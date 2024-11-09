@@ -1,11 +1,13 @@
 
 --- Signal manager class
 --- @class Signal
---- @field listeners
+--- @field listeners table
 Signal = {}
 Signal.__index = Signal
 
 
+---create a new signaller
+---@return Signal signal
 function Signal:new()
     local self = setmetatable({}, Signal)
     self.listeners = {}

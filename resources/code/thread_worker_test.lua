@@ -15,14 +15,15 @@ local out_thread_channel = love.thread.getChannel("out_"..ch_name)
 local perc_progress = 0.0
 
 for i = 1, r_length do
-    if i%1000000 == 0 then
+    if i%10000000 == 0 then
         local msg = in_thread_channel:pop()
         if msg and msg:find("^stop_thread") then
             print("STOP THREAD: "..tostring(msg).." "..ch_name)
             out_thread_channel:push( "stopped" )
             return
         end
-
+        -- print( "progress: "..tostring(i/r_length) )
+        out_thread_channel:push( "progress "..tostring(i/r_length))
     end
 
     res = i*i

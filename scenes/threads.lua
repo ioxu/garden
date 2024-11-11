@@ -33,6 +33,7 @@ print("thread_code check: ", tc, " ", error_message)
 --- @field height number
 --- @field position table
 --- @field state job_state
+--- @field progress ?number
 --- @field thread love.Thread
 --- @field in_channel love.Channel
 --- @field out_channel love.Channel
@@ -52,6 +53,7 @@ function Job:new( name )
     self.height = 8
     self.position = {0.0, 0.0}
     self.state = "UNSTARTED"
+    self.progress = 0.0
     self.thread = nil-- love.thread.newThread()
     self.in_channel = love.thread.getChannel( "in_"..self.name )
     self.out_channel = love.thread.getChannel( "out_"..self.name )
@@ -61,7 +63,9 @@ function Job:new( name )
     return self
 end
 
+
 function Job:start( jobname )
+    self.progress = 0.0
     self.thread:start( jobname )
     if self.thread:isRunning() then
         print("job started:", self.name)
@@ -73,19 +77,12 @@ function Job:start( jobname )
     end
 end
 
+
 function Job:stop( jobname )
-    -- if self.thread:isRunning() then
-    --     print("stopping job: "..self.name)
-    --     self.channel:push( "stop_thread" )
-    --     -- self.signals:emit("stopped", self)
-    --     -- self.state = "STOPPED"
-    --     return true
-    -- else        
-    --     return false
-    -- end
     print("stopping job: "..self.name)
     self.in_channel:push( "stop_thread" )
 end
+
 
 function Job:update(dt)
     local msg = self.out_channel:pop()
@@ -100,6 +97,10 @@ function Job:update(dt)
             print("STOPPED:"..self.name..":"..msg)
             self.state = "STOPPED"
             self.signals:emit("stopped", self)
+        elseif msg:find("^progress") then
+            local split = {} 
+            for word in msg:gmatch("%S+") do table.insert(split, word) end
+            self.progress = tonumber( split[2] )
         end
     end
 end
@@ -111,7 +112,8 @@ function Job:draw()
         -- love.graphics.setLineWidth(1)
         love.graphics.setColor(1,1,1,0.25)
     elseif self.state == "RUNNING" then
-        love.graphics.setColor(0,1,0,0.75)
+        love.graphics.setColor(0.75,0.65,0.2,1.0)
+        -- love.graphics.setColor(0.749, 0.949, 0.078, 0.75)--0,1,0,0.75)
         love.graphics.setLineWidth(1.2)
         -- love.graphics.setLineWidth(1)
         -- love.graphics.setColor(1,0.65,0,1.0)
@@ -121,12 +123,28 @@ function Job:draw()
         -- love.graphics.setColor(0.9,0.2,1.0,0.15)
     elseif self.state == "STOPPED" then
         -- love.graphics.setLineWidth(3.0)
-        love.graphics.setColor(0.75,0.65,0.2,1.0)
+        -- love.graphics.setColor(0.75,0.65,0.2,1.0)
+        love.graphics.setColor(0.761, 0.353, 0.125,1.0)
         -- love.graphics.setColor(0.9,0.2,1.0,0.15)
     end
     self.hilite_col = {love.graphics.getColor()}
-    love.graphics.rectangle("line", self.position[1], self.position[2], self.width, self.height)
-    love.graphics.print(self.name, self.position[1]+1, self.position[2]+1, 0, 0.25, 0.25)
+    local dim = {["x"]=self.position[1], ["y"]=self.position[2], ["w"]=self.width, ["h"]=self.height}
+    love.graphics.rectangle("line", dim.x, dim.y, dim.w, dim.h)
+    love.graphics.print(self.name, dim.x+1, dim.y+1, 0, 0.25, 0.25)
+
+    local start_x = dim.x + 2
+    local end_x = dim.x + 2 + dim.w - 4
+    local start_y = dim.y + dim.h - 2
+    local end_y = start_y - dim.h - 2
+
+    local hh = start_y - end_y - 10
+    -- print("hh:"..hh)
+
+    love.graphics.setLineWidth(1)
+    for i =1, math.floor((hh)*self.progress), 2 do
+        love.graphics.line( start_x, start_y - i, end_x, start_y - i)
+    end
+
 end
 
 
@@ -204,6 +222,7 @@ jobs.start = function()
         end
     end
 end
+
 
 jobs.stop = function()
     print("stopping jobs")

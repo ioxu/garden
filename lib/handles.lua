@@ -16,6 +16,8 @@ local font_small_italic = love.graphics.newFont( "resources/fonts/XITS-Italic.ot
 --- @field highlighted boolean
 --- @field selected boolean
 --- @field dragging boolean
+--- @field dragable boolean
+--- @field colour table
 --- @field label string
 --- @field label_offset table {x= x_offset, y= y_offset}
 --- @field signals table signals object
@@ -34,6 +36,9 @@ function Handles.Handle:new(name, x, y)
     self.highlighted = false
     self.selected = false
     self.dragging = false
+    self.dragable = true
+
+    self.colour = {1,1,1,1}
 
     self.label = nil
     self.label_offset = {x=0.0, y=0.0}
@@ -61,7 +66,7 @@ end
 
 function Handles.Handle:mousemoved(x,y,dx,dy,...)
     -- print("Handles.Handle:mousemoved", x, y)
-    if self.selected and self.dragging then
+    if self.selected and self.dragging and self.dragable then
         -- drag
         self.signals:emit("dragged", self, dx, dy)
         self.x = self.x + dx
@@ -129,7 +134,7 @@ end
 
 function Handles.CircleHandle:draw()
     love.graphics.setFont( font_small )
-    love.graphics.setColor(1,1,1,1)
+    love.graphics.setColor(self.colour)--1,1,1,1)
     love.graphics.setLineWidth(1)
     
     if self.highlighted then

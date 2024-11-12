@@ -16,6 +16,9 @@ local function print(...)
     oldprint( print_header .. result )
 end
 ------------------------------------------------------------------------------------------
+local font_medium = love.graphics.newFont(15)
+local font_medium_small = love.graphics.newFont(11)
+------------------------------------------------------------------------------------------
 local thread_code = love.filesystem.read( "resources/code/thread_worker_test.lua" )
 local tc, error_message = load( thread_code )
 print("thread_code check: ", tc, " ", error_message)
@@ -34,6 +37,7 @@ print("thread_code check: ", tc, " ", error_message)
 --- @field position table
 --- @field state job_state
 --- @field progress ?number
+--- @field work_units ?number
 --- @field thread love.Thread
 --- @field in_channel love.Channel
 --- @field out_channel love.Channel
@@ -54,6 +58,7 @@ function Job:new( name )
     self.position = {0.0, 0.0}
     self.state = "UNSTARTED"
     self.progress = 0.0
+    self.work_units = 0
     self.thread = nil-- love.thread.newThread()
     self.in_channel = love.thread.getChannel( "in_"..self.name )
     self.out_channel = love.thread.getChannel( "out_"..self.name )
@@ -87,6 +92,8 @@ end
 function Job:update(dt)
     local msg = self.out_channel:pop()
     if msg then
+        local split = {}
+        for word in msg:gmatch("%S+") do table.insert(split, word) end
         if msg:find("^complete") then
             print("COMPLETE:"..self.name..":"..msg)
             if self.state == "RUNNING" then
@@ -98,9 +105,9 @@ function Job:update(dt)
             self.state = "STOPPED"
             self.signals:emit("stopped", self)
         elseif msg:find("^progress") then
-            local split = {} 
-            for word in msg:gmatch("%S+") do table.insert(split, word) end
             self.progress = tonumber( split[2] )
+        elseif msg:find("^work_units") then            
+            self.work_units = tonumber( split[2] )
         end
     end
 end
@@ -150,13 +157,20 @@ end
 
 function Job:draw_popup( x, y )
     if self.show_popup then
-        love.graphics.setColor(0.0, 0.0, 0.0, 0.75)
+        love.graphics.setColor(0.0, 0.0, 0.0, 0.85)
         -- local dim = {["x"]=self.position[1], ["y"]=self.position[2], ["w"]=80, ["h"]=150}
-        local dim = {["x"]=x+15, ["y"]=y+15, ["w"]=80, ["h"]=150}
+        local dim = {["x"]=x+15, ["y"]=y+15, ["w"]=100, ["h"]=150}
         love.graphics.rectangle("fill", dim.x, dim.y, dim.w, dim.h )
         love.graphics.setLineWidth(2)
         love.graphics.setColor(self.hilite_col)
         love.graphics.rectangle("line", dim.x, dim.y, dim.w, dim.h)
+        love.graphics.setFont(font_medium)
+        love.graphics.print(self.name, dim.x+5, dim.y+5)
+        love.graphics.setFont(font_medium_small)
+        love.graphics.print(string.format("%0.3f",self.progress), dim.x+5, dim.y+30)
+        love.graphics.print(string.format("%0.2e",self.work_units), dim.x+5, dim.y+42)
+        love.graphics.setFont(font_medium)
+        love.graphics.print(self.state, dim.x+3, dim.y+dim.h-18)
     end
 end
 

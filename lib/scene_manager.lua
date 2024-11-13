@@ -66,7 +66,8 @@ return{
         for i,v in ipairs(love.filesystem.getDirectoryItems("scenes")) do
             if string.find(v, ".lua") then
                 print(string.format("found %s", v))
-                local state_name = string.gsub(v, ".lua", "")                self.states[state_name]=require("scenes." .. string.gsub(v, ".lua", ""))
+                local state_name = string.gsub(v, ".lua", "")                
+                self.states[state_name]=require("scenes." .. string.gsub(v, ".lua", ""))
                 
                 -- if the required scene name is an empty.lua file, require will return true
                 -- if so, then skip reading from the module

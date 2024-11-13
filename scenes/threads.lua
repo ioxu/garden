@@ -5,6 +5,9 @@ Threads.description = "This is a long description of the scene"
 local navigation_camera = require "lib.navigation_camera"
 local signal = require "lib.signal"
 local handles = require "lib.handles"
+local shaping = require "lib.shaping"
+
+local last_dt = 0.0
 ------------------------------------------------------------------------------------------
 local oldprint = print
 local print_header = "\27[38;5;48m[threads]\27[0m "
@@ -18,6 +21,10 @@ end
 ------------------------------------------------------------------------------------------
 local font_medium = love.graphics.newFont(15)
 local font_medium_small = love.graphics.newFont(11)
+------------------------------------------------------------------------------------------
+
+local tech_graphic_01 = love.graphics.newImage("other/graphics/DP01_12.png")
+
 ------------------------------------------------------------------------------------------
 local thread_code = love.filesystem.read( "resources/code/thread_worker_test.lua" )
 local tc, error_message = load( thread_code )
@@ -44,6 +51,8 @@ print("thread_code check: ", tc, " ", error_message)
 --- @field signals Signal
 --- @field show_popup boolean
 --- @field hilite_col table
+--- @field finish_post_time number
+--- @field start_post_time number
 local Job = {}
 
 ---comment
@@ -65,12 +74,17 @@ function Job:new( name )
     self.signals = signal:new()
     self.show_popup = false
     self.hilite_col = {0.5,0.5,0.5,0.5}
+    
+    self.finish_post_time = 0.0
+    self.start_post_time = 0.0
     return self
 end
 
 
 function Job:start( jobname )
     self.progress = 0.0
+    self.start_post_time = 0.0
+    self.finish_post_time = 0.0
     self.thread:start( jobname )
     if self.thread:isRunning() then
         print("job started:", self.name)
@@ -90,6 +104,7 @@ end
 
 
 function Job:update(dt)
+    self.start_post_time = self.start_post_time + dt
     local msg = self.out_channel:pop()
     if msg then
         local split = {}
@@ -110,6 +125,58 @@ function Job:update(dt)
             self.work_units = tonumber( split[2] )
         end
     end
+
+    -- if self.state == "FINISHED" then
+    --     self.finish_post_time = self.finish_post_time + dt
+    -- end
+end
+
+
+local function line_inerp_points(distance, points, distances)
+    local accumulatedDistance = 0
+
+    -- Find the current segment based on the distance covered
+    for i = 1, #distances do
+        local segmentDistance = distances[i]
+        
+        if accumulatedDistance + segmentDistance >= distance and
+            distance ~= 0.0
+            and distance > accumulatedDistance
+            then
+            -- print("accdist+segmentDistance >= distance: ", accumulatedDistance, " ", segmentDistance, " ", distance)
+            local segmentProgress = (distance - accumulatedDistance) / segmentDistance
+            local p1 = points[i]
+            local p2 = points[i + 1]
+            
+            local x = p1[1] + (p2[1] - p1[1]) * segmentProgress
+            local y = p1[2] + (p2[2] - p1[2]) * segmentProgress
+            
+            love.graphics.line( p1[1], p1[2], x, y )
+        end
+
+        
+        accumulatedDistance = accumulatedDistance + segmentDistance
+
+        if distance > accumulatedDistance then
+            local p1 = points[i]
+            local p2 = points[i + 1]
+            love.graphics.line( p1[1], p1[2], p2[1], p2[2] )
+        end
+    end
+end
+
+
+local function calc_distances(points)
+    local distances = {}
+    local totalDistance = 0
+    for i =1, #points -1 do
+        local dx = points[i+1][1] - points[i][1]
+        local dy = points[i+1][2] - points[i][2]
+        local dist = math.sqrt( dx * dx + dy * dy )
+        distances[i] = dist
+        totalDistance = totalDistance + dist
+    end
+    return distances, totalDistance
 end
 
 
@@ -136,7 +203,31 @@ function Job:draw()
     end
     self.hilite_col = {love.graphics.getColor()}
     local dim = {["x"]=self.position[1], ["y"]=self.position[2], ["w"]=self.width, ["h"]=self.height}
-    love.graphics.rectangle("line", dim.x, dim.y, dim.w, dim.h)
+    
+    -- draw rectangle
+    if self.start_post_time > 0.25 or self.start_post_time == 0.0 or (self.state == "STOPPED" or self.state == "FINISHED") then
+        love.graphics.rectangle("line", dim.x, dim.y, dim.w, dim.h)
+    else
+        -- animate draw rectangle
+        local rect_right_points ={
+            {dim.x + dim.w/2.0, dim.y},
+            {dim.x+dim.w, dim.y},
+            {dim.x+dim.w, dim.y+dim.h},
+            {dim.x + dim.w/2.0, dim.y+dim.h}
+        }
+        local distances_right = calc_distances( rect_right_points )
+        line_inerp_points(self.start_post_time*110, rect_right_points, distances_right)
+
+        local rect_left_points ={
+            {dim.x + dim.w/2.0, dim.y},
+            {dim.x, dim.y},
+            {dim.x, dim.y+dim.h},
+            {dim.x + dim.w/2.0, dim.y+dim.h}
+        }
+        local distances_left = calc_distances( rect_left_points )
+        line_inerp_points(self.start_post_time*110, rect_left_points, distances_left)
+    end
+
     love.graphics.print(self.name, dim.x+1, dim.y+1, 0, 0.25, 0.25)
 
     local start_x = dim.x + 2
@@ -151,6 +242,28 @@ function Job:draw()
     for i =1, math.floor((hh)*self.progress), 2 do
         love.graphics.line( start_x, start_y - i, end_x, start_y - i)
     end
+
+    
+    if self.state == "FINISHED" and self.finish_post_time < 0.5 then--1.0 then
+        self.finish_post_time = self.finish_post_time + last_dt
+        
+        -- rectangle burst:
+        -- local aa = shaping.remap(self.finish_post_time, 0, 1.0, 1.0, 0.0 )
+        -- local ss = shaping.bias(self.finish_post_time, 0.85) * 10
+        -- local ll = shaping.bias(self.finish_post_time, 0.25)
+        -- love.graphics.setLineWidth(1.2) --+ ll*25 )
+        -- love.graphics.setColor(0.75 + aa*0.5 ,0.65+aa*0.5, 0.2+aa*0.5 ,1.0 * aa )
+        -- love.graphics.rectangle("line", dim.x - ss, dim.y - ss, dim.w + ss*2, dim.h+ss*2)
+    
+        -- flashing rectangle
+        love.graphics.setLineWidth(1.2)
+        local aa = math.floor(math.fmod(self.finish_post_time*6, 1.0)*2)
+        -- love.graphics.setColor(0.75, 0.65, 0.2, 1.0 * aa )
+        
+        love.graphics.setColor( 0.25, 0.6, 1.0, 1.0 * aa )
+        love.graphics.rectangle("line", dim.x, dim.y, dim.w, dim.h)
+    end
+
 
 end
 
@@ -284,7 +397,7 @@ job_display.height = 16--8
 job_display.box_width = 16
 job_display.box_height = 32
 job_display.margin = 5
-job_display.origin = {150, 150}
+job_display.origin = {0,0}--{150, 150}
 
 
 job_display.layout = function ()
@@ -352,28 +465,32 @@ end
 start_button.signals:register("pressed", _on_start_button_pressed)
 
 ------------------------------------------------------------------------------------------
+local initialised = false
 function Threads:init()
-    navigation_camera.camera:lookAt(
-        job_display.origin[1] + ((job_display.width * (job_display.box_width + job_display.margin) ))/2.0,
-        job_display.origin[2] + ((job_display.height * (job_display.box_height + job_display.margin) ))/2.0
-    )
 
-    -- fill jobs.jobs with Jobs
-    for j=1,(job_display.width * job_display.height) do
-        local job = Job:new("job_"..tostring(j))
-        job.width = job_display.box_width
-        job.height = job_display.box_height
-        job.thread = love.thread.newThread( thread_code )
-        job.signals:register( "finished", jobs.on_job_finished )
-        job.signals:register( "stopped", jobs.on_job_finished )
-        table.insert(jobs.jobs, job )
+    if not initialised then
+        navigation_camera.camera:lookAt(
+            job_display.origin[1] + ((job_display.width * (job_display.box_width + job_display.margin) ))/2.0,
+            job_display.origin[2] + ((job_display.height * (job_display.box_height + job_display.margin) ))/2.0
+        )
+
+        -- fill jobs.jobs with Jobs
+        for j=1,(job_display.width * job_display.height) do
+            local job = Job:new("job_"..tostring(j))
+            job.width = job_display.box_width
+            job.height = job_display.box_height
+            job.thread = love.thread.newThread( thread_code )
+            job.signals:register( "finished", jobs.on_job_finished )
+            job.signals:register( "stopped", jobs.on_job_finished )
+            table.insert(jobs.jobs, job )
+        end
+
+        -- layout jobs
+        job_display.layout()
     end
 
-    -- layout jobs
-    job_display.layout()
-
-
     -- jobs.start()
+    initialised = true
 end
 
 function Threads:focus()
@@ -383,6 +500,7 @@ function Threads:defocus()
 end
 
 function Threads:update(dt)
+    last_dt = dt
     navigation_camera.update(dt)
 
     for k,v in pairs(jobs.running_jobs) do
@@ -393,6 +511,10 @@ end
 
 function Threads:draw()
     navigation_camera.camera:attach()
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.draw( tech_graphic_01, job_display.origin[1]-(75*0.25), -90, 0, 0.25, 0.25 )
+    
+    love.graphics.setColor(1,1,1,1)
     job_display.draw()
     navigation_camera.camera:detach()
 

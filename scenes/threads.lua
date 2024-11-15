@@ -6,7 +6,10 @@ local navigation_camera = require "lib.navigation_camera"
 local signal = require "lib.signal"
 local handles = require "lib.handles"
 local shaping = require "lib.shaping"
+local shapes = require "lib.shapes"
 
+local global_time = 0.0
+local global_time_from_start_threads = 0.0
 local last_dt = 0.0
 ------------------------------------------------------------------------------------------
 local oldprint = print
@@ -23,7 +26,37 @@ local font_medium = love.graphics.newFont(15)
 local font_medium_small = love.graphics.newFont(11)
 ------------------------------------------------------------------------------------------
 
-local tech_graphic_01 = love.graphics.newImage("other/graphics/DP01_12.png")
+-- local result,  tech_graphic_01 = pcall(function() return love.graphics.newImage("other/graphics/DP01_12.png") end)
+-- if result == false then
+--     local imdata = love.image.newImageData(64,64)
+--     for y = 1,64 do
+--         for x=1,64 do
+--             imdata:setPixel(x-1,y-1, x/64.0, y/64.0, 0, 1.0 )
+--         end
+--     end
+--     tech_graphic_01 = love.graphics.newImage(imdata)
+-- end
+
+-- local tech_header_outline_points_outer = { {0, 0}, {200, 0}, {200, 50}, { 20, 50 }, {0, 30}, {0,0} }
+local tech_outline_bevel = 5
+local tech_outline_height = 30
+local tech_outline_width = 200
+local tech_header_outline_points_outer = {
+    {0, tech_outline_height-tech_outline_bevel},
+    {0, 0},
+    {tech_outline_width, 0},
+    {tech_outline_width, tech_outline_height},
+    {tech_outline_bevel, tech_outline_height},
+    {0, tech_outline_height-tech_outline_bevel}
+}
+local tech_header_outline_points_line = {
+    {tech_header_outline_points_outer[1][1], tech_header_outline_points_outer[1][2]-5},
+    {tech_header_outline_points_outer[3][1], tech_header_outline_points_outer[1][2]-5 }
+}
+
+local tech_header_oultine_distances, tech_header_oultine_total_distance = shapes.calc_distances( tech_header_outline_points_outer )
+local tech_header_line_distances, tech_header_line_total_distance = shapes.calc_distances( tech_header_outline_points_line )
+
 
 ------------------------------------------------------------------------------------------
 local thread_code = love.filesystem.read( "resources/code/thread_worker_test.lua" )
@@ -132,61 +165,14 @@ function Job:update(dt)
 end
 
 
-local function line_inerp_points(distance, points, distances)
-    local accumulatedDistance = 0
-
-    -- Find the current segment based on the distance covered
-    for i = 1, #distances do
-        local segmentDistance = distances[i]
-        
-        if accumulatedDistance + segmentDistance >= distance and
-            distance ~= 0.0
-            and distance > accumulatedDistance
-            then
-            -- print("accdist+segmentDistance >= distance: ", accumulatedDistance, " ", segmentDistance, " ", distance)
-            local segmentProgress = (distance - accumulatedDistance) / segmentDistance
-            local p1 = points[i]
-            local p2 = points[i + 1]
-            
-            local x = p1[1] + (p2[1] - p1[1]) * segmentProgress
-            local y = p1[2] + (p2[2] - p1[2]) * segmentProgress
-            
-            love.graphics.line( p1[1], p1[2], x, y )
-        end
-
-        
-        accumulatedDistance = accumulatedDistance + segmentDistance
-
-        if distance > accumulatedDistance then
-            local p1 = points[i]
-            local p2 = points[i + 1]
-            love.graphics.line( p1[1], p1[2], p2[1], p2[2] )
-        end
-    end
-end
-
-
-local function calc_distances(points)
-    local distances = {}
-    local totalDistance = 0
-    for i =1, #points -1 do
-        local dx = points[i+1][1] - points[i][1]
-        local dy = points[i+1][2] - points[i][2]
-        local dist = math.sqrt( dx * dx + dy * dy )
-        distances[i] = dist
-        totalDistance = totalDistance + dist
-    end
-    return distances, totalDistance
-end
-
-
 -- function Job:draw( x_off, y_off )
 function Job:draw()
     if self.state == "UNSTARTED" then
         -- love.graphics.setLineWidth(1)
         love.graphics.setColor(1,1,1,0.25)
     elseif self.state == "RUNNING" then
-        love.graphics.setColor(0.75,0.65,0.2,1.0)
+        -- love.graphics.setColor(0.75,0.65,0.2,1.0)
+        love.graphics.setColor(0.639, 0.392, 0.184, 1.0)
         -- love.graphics.setColor(0.749, 0.949, 0.078, 0.75)--0,1,0,0.75)
         love.graphics.setLineWidth(1.2)
         -- love.graphics.setLineWidth(1)
@@ -205,7 +191,7 @@ function Job:draw()
     local dim = {["x"]=self.position[1], ["y"]=self.position[2], ["w"]=self.width, ["h"]=self.height}
     
     -- draw rectangle
-    if self.start_post_time > 0.25 or self.start_post_time == 0.0 or (self.state == "STOPPED" or self.state == "FINISHED") then
+    if self.start_post_time > 0.35 or self.start_post_time == 0.0 or (self.state == "STOPPED" or self.state == "FINISHED") then
         love.graphics.rectangle("line", dim.x, dim.y, dim.w, dim.h)
     else
         -- animate draw rectangle
@@ -215,8 +201,8 @@ function Job:draw()
             {dim.x+dim.w, dim.y+dim.h},
             {dim.x + dim.w/2.0, dim.y+dim.h}
         }
-        local distances_right = calc_distances( rect_right_points )
-        line_inerp_points(self.start_post_time*110, rect_right_points, distances_right)
+        local distances_right = shapes.calc_distances( rect_right_points )
+        shapes.draw_line_interp_points(self.start_post_time*110, rect_right_points, distances_right)
 
         local rect_left_points ={
             {dim.x + dim.w/2.0, dim.y},
@@ -224,8 +210,8 @@ function Job:draw()
             {dim.x, dim.y+dim.h},
             {dim.x + dim.w/2.0, dim.y+dim.h}
         }
-        local distances_left = calc_distances( rect_left_points )
-        line_inerp_points(self.start_post_time*110, rect_left_points, distances_left)
+        local distances_left = shapes.calc_distances( rect_left_points )
+        shapes.draw_line_interp_points(self.start_post_time*110, rect_left_points, distances_left)
     end
 
     love.graphics.print(self.name, dim.x+1, dim.y+1, 0, 0.25, 0.25)
@@ -332,6 +318,7 @@ end
 jobs.start = function()
     print("starting jobs")
 
+    global_time_from_start_threads = 0.0
     ---------------------------------------
     -- start all over again, reset all jobs
     for i =1, #jobs.jobs do
@@ -467,6 +454,7 @@ start_button.signals:register("pressed", _on_start_button_pressed)
 ------------------------------------------------------------------------------------------
 local initialised = false
 function Threads:init()
+    global_time = 0.0
 
     if not initialised then
         navigation_camera.camera:lookAt(
@@ -501,6 +489,8 @@ end
 
 function Threads:update(dt)
     last_dt = dt
+    global_time = global_time + dt
+    global_time_from_start_threads = global_time_from_start_threads + dt
     navigation_camera.update(dt)
 
     for k,v in pairs(jobs.running_jobs) do
@@ -511,9 +501,35 @@ end
 
 function Threads:draw()
     navigation_camera.camera:attach()
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.draw( tech_graphic_01, job_display.origin[1]-(75*0.25), -90, 0, 0.25, 0.25 )
+    love.graphics.setColor(0.639, 0.392, 0.184)--1, 0.675, 0,1)
     
+    love.graphics.push()
+    love.graphics.translate(0, -tech_header_outline_points_outer[4][2]-10)
+    love.graphics.setLineWidth(1)
+    
+    local dd = (math.max(0.0, global_time_from_start_threads-0.25) / .25) * tech_header_oultine_total_distance
+    shapes.draw_line_interp_points( dd,
+    tech_header_outline_points_outer,
+    tech_header_oultine_distances
+    )
+    local ddl = (math.max(0.0, global_time_from_start_threads-0.45) / .12) * tech_header_line_total_distance
+    shapes.draw_line_interp_points(ddl,
+    tech_header_outline_points_line,
+    tech_header_line_distances
+    )
+    local rect_anim = math.min(math.max(0.0, global_time_from_start_threads-0.55) / 0.12,1.0)
+    love.graphics.rectangle( "fill", 0.0, 0.0, tech_outline_width * rect_anim, tech_header_outline_points_line[1][2] )
+
+    love.graphics.setColor(0.7, 0.7, 0.7)--1, 0.675, 0,1)
+    -- local rect2_anim = math.sin( math.min(math.max(0.0, global_time_from_start_threads-0.77) / 0.3,1.0) * (math.pi/2.0) )
+    local rect2_anim = math.min(math.max(0.0, global_time_from_start_threads-0.77) / 0.65,1.0) 
+    rect2_anim = math.pow( 1 - math.pow(( rect2_anim - 1 ),2) , 0.5)
+    love.graphics.rectangle( "fill", tech_outline_width + 0.5, -0.5, -(rect2_anim * 45), tech_header_outline_points_line[1][2] + 1.0 )
+
+    love.graphics.pop()
+
+
+    -- love.graphics.draw( tech_graphic_01, job_display.origin[1]-(75*0.25), -90, 0, 0.25, 0.25 )
     love.graphics.setColor(1,1,1,1)
     job_display.draw()
     navigation_camera.camera:detach()

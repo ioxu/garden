@@ -1,4 +1,4 @@
--- codingtraing palette
+-- codingtrain palette
 Palette = {
     {11, 106, 136},
     {45, 197, 244},
